@@ -126,13 +126,38 @@ const STAGE_BG = {
 };
 
 export default function App() {
-  const [tasks] = useLocalStorage('vibetracker.tasks', MOCK_TASKS);
+  const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', MOCK_TASKS);
 
-  // TODO M5 crud-modal:
-  //   const [editing, setEditing] = useState(null);
-  //
+  const [editing, setEditing] = useState(null);
+  // null = modal closed, 'new' = new-task form, Task object = edit mode.
+
   // TODO M11 anchors:
   //   const [anchors, setAnchors] = useLocalStorage('vibetracker.anchors', [...]);
+
+  const openNew  = () => setEditing('new');
+  const openEdit = (task) => setEditing(task);
+  const closeModal = () => setEditing(null);
+
+  const saveTask = (values) => {
+    if (editing === 'new') {
+      const task = {
+        ...values,
+        id: `t${Date.now()}`,
+        createdDate: new Date().toISOString().slice(0, 10),
+      };
+      setTasks([...tasks, task]);
+    } else {
+      setTasks(tasks.map(t => t.id === editing.id ? { ...editing, ...values } : t));
+    }
+    closeModal();
+  };
+
+  const deleteTask = (id) => {
+    if (window.confirm("Delete this task? There's no undo.")) {
+      setTasks(tasks.filter(t => t.id !== id));
+      closeModal();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-surface-base p-6">
@@ -145,6 +170,13 @@ export default function App() {
             vibeline — Kanban that remembers your prompts.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={openNew}
+          className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+        >
+          + New task
+        </button>
       </header>
 
       {/* TODO M11 anchors: render the Anchor Board (Presentation / Demo / Report / Documentation) above the board. */}
@@ -186,23 +218,26 @@ export default function App() {
                     .slice(0, 2)
                     .toUpperCase();
                   return (
-                    <li
-                      key={task.id}
-                      className="rounded-lg bg-surface-raised p-4 shadow-sm"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
-                          {initials}
+                    <li key={task.id}>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(task)}
+                        className="w-full rounded-lg bg-surface-raised p-4 text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
+                            {initials}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-medium text-text-primary">
+                              {task.title}
+                            </h3>
+                            <p className="mt-1 text-xs text-text-muted">
+                              {task.assignee}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-medium text-text-primary">
-                            {task.title}
-                          </h3>
-                          <p className="mt-1 text-xs text-text-muted">
-                            {task.assignee}
-                          </p>
-                        </div>
-                      </div>
+                      </button>
                     </li>
                   );
                 })}
@@ -211,6 +246,185 @@ export default function App() {
           );
         })}
       </main>
+
+      {editing && (
+        <TaskModal
+          mode={editing === 'new' ? 'new' : 'edit'}
+          initialTask={editing === 'new' ? null : editing}
+          onSave={saveTask}
+          onDelete={() => deleteTask(editing.id)}
+          onClose={closeModal}
+        />
+      )}
     </div>
+  );
+}
+
+function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
+  const [formValues, setFormValues] = useState(
+    initialTask
+      ? {
+          title: initialTask.title ?? '',
+          description: initialTask.description ?? '',
+          type: initialTask.type ?? 'feature',
+          status: initialTask.status ?? 'todo',
+          assignee: initialTask.assignee ?? (TEAM[0] ?? ''),
+          dueDate: initialTask.dueDate ?? '',
+        }
+      : {
+          title: '',
+          description: '',
+          type: 'feature',
+          status: 'todo',
+          assignee: TEAM[0] ?? '',
+          dueDate: '',
+        }
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  const handleChange = (field) => (e) =>
+    setFormValues((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formValues.title.trim()) return;
+    onSave(formValues);
+  };
+
+  const labelClass = 'block text-xs font-medium text-text-muted mb-1';
+  const fieldClass =
+    'block w-full rounded-md border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2';
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <form
+          onSubmit={handleSubmit}
+          onClick={(e) => e.stopPropagation()}
+          className="pointer-events-auto w-full max-w-lg rounded-lg bg-surface-raised p-6 shadow-lg space-y-4"
+        >
+          <h2 className="text-lg font-semibold text-text-primary">
+            {mode === 'new' ? 'New task' : 'Edit task'}
+          </h2>
+
+          <div>
+            <label className={labelClass} htmlFor="task-title">Title</label>
+            <input
+              id="task-title"
+              type="text"
+              required
+              autoFocus
+              value={formValues.title}
+              onChange={handleChange('title')}
+              className={fieldClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="task-description">Description</label>
+            <textarea
+              id="task-description"
+              rows={3}
+              value={formValues.description}
+              onChange={handleChange('description')}
+              className={fieldClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="task-type">Type</label>
+            <select
+              id="task-type"
+              value={formValues.type}
+              onChange={handleChange('type')}
+              className={fieldClass}
+            >
+              <option value="feature">Feature</option>
+              <option value="bug">Bug</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="task-status">Status</label>
+            <select
+              id="task-status"
+              value={formValues.status}
+              onChange={handleChange('status')}
+              className={fieldClass}
+            >
+              {STAGES.map((stage) => (
+                <option key={stage.id} value={stage.id}>
+                  {stage.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="task-assignee">Assignee</label>
+            <select
+              id="task-assignee"
+              value={formValues.assignee}
+              onChange={handleChange('assignee')}
+              className={fieldClass}
+            >
+              {TEAM.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="task-dueDate">Due date</label>
+            <input
+              id="task-dueDate"
+              type="date"
+              value={formValues.dueDate}
+              onChange={handleChange('dueDate')}
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            {mode === 'edit' ? (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="text-sm font-medium text-type-bug hover:underline"
+              >
+                Delete
+              </button>
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full px-4 py-2 text-sm font-medium text-text-muted hover:bg-surface-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
