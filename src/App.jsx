@@ -315,6 +315,40 @@ export default function App() {
     setTimeout(() => setToast(null), 2000);
   };
 
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOverStage, setDragOverStage] = useState(null);
+
+  const handleDragStart = (e, taskId) => {
+    e.dataTransfer.setData('text/plain', taskId);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingId(taskId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingId(null);
+    setDragOverStage(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnter = (stageId) => {
+    setDragOverStage(stageId);
+  };
+
+  const handleDrop = (e, newStatus) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('text/plain');
+    setDragOverStage(null);
+    setDraggingId(null);
+    if (!taskId) return;
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    );
+  };
+
   return (
     <div className="min-h-screen bg-surface-base p-6">
       <header className="mb-6 flex items-end justify-between">
@@ -394,7 +428,12 @@ export default function App() {
           return (
             <section
               key={stage.id}
-              className="rounded-lg bg-surface-muted p-3"
+              onDragOver={handleDragOver}
+              onDragEnter={() => handleDragEnter(stage.id)}
+              onDrop={(e) => handleDrop(e, stage.id)}
+              className={`rounded-lg bg-surface-muted p-3 transition ${
+                dragOverStage === stage.id ? 'ring-2 ring-brand-500 ring-offset-2' : ''
+              }`}
             >
               <header
                 className={`mb-3 rounded-md px-3 py-2 ${STAGE_BG[stage.id]}`}
@@ -422,6 +461,9 @@ export default function App() {
                       <div
                         role="button"
                         tabIndex={0}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, task.id)}
+                        onDragEnd={handleDragEnd}
                         onClick={() => openEdit(task)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -429,7 +471,9 @@ export default function App() {
                             openEdit(task);
                           }
                         }}
-                        className={`border-l-4 ${typeMeta.borderClass} w-full cursor-pointer rounded-lg ${dueMeta.bgClass} p-4 shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2`}
+                        className={`border-l-4 ${typeMeta.borderClass} w-full cursor-pointer rounded-lg ${dueMeta.bgClass} p-4 shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                          draggingId === task.id ? 'opacity-50' : ''
+                        }`}
                       >
                         {dueMeta.icon && (
                           <div className="mb-2 flex justify-end">
@@ -459,6 +503,7 @@ export default function App() {
                               <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   type="button"
+                                  draggable={false}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleCopyContext(task);
@@ -473,6 +518,7 @@ export default function App() {
                                 {TEAM.length <= 1 ? (
                                   <select
                                     disabled
+                                    draggable={false}
                                     onClick={(e) => e.stopPropagation()}
                                     className="shrink-0 rounded-full border border-border-subtle bg-surface-muted px-2 py-0.5 text-xs text-text-muted disabled:opacity-70 disabled:cursor-not-allowed"
                                     title="Only one assignee in the solo build"
@@ -482,6 +528,7 @@ export default function App() {
                                 ) : (
                                   <select
                                     value=""
+                                    draggable={false}
                                     onChange={(e) => {
                                       e.stopPropagation();
                                       if (e.target.value) handleHandoff(task.id, e.target.value);
