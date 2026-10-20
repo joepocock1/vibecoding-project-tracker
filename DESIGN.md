@@ -10,88 +10,59 @@
 
 ## 1. Mood / vibe
 
-One sentence that captures the feeling the tracker should leave you with.
-
-`<TODO>`
-
-Two or three references that capture the vibe (links to dribbble shots, screenshots of apps you admire, Pinterest boards — anything visual):
-
-- `<TODO>`
-- `<TODO>`
-- `<TODO>`
-
-Anti-references — what we are explicitly **not** trying to look like:
-
-- `<TODO>`
+Calm desk tool with electric accents — a kanban that feels lightweight and current, built for someone iterating fast with AI.
 
 ## 2. Color palette
 
-These are the colors the build milestones will reference. Once chosen, paste the hex values into `tailwind.config.js` so the rest of the team can use Tailwind utility classes (e.g. `bg-brand-primary`, `border-due-warning`).
+All values are hex and are mirrored in `tailwind.config.js` under `theme.extend.colors`.
 
-### Brand
+**Brand**
+- `--brand-500` **#6366f1** · indigo primary (buttons, active nav, focus ring)
+- `--brand-600` **#4f46e5** · indigo hover/pressed
+- `--brand-100` **#e0e7ff** · indigo tint for subtle fills
 
-| Token | Hex | Where it shows up |
-|---|---|---|
-| `brand-primary` | `<TODO>` | Header, "+" button, focus rings |
-| `brand-accent` | `<TODO>` | Highlights, hover states, links |
-| `surface-page` | `<TODO>` | Page background |
-| `surface-card` | `<TODO>` | Card background |
-| `text-primary` | `<TODO>` | Body text |
-| `text-muted` | `<TODO>` | Captions, dates, counts |
+**Surface**
+- `--surface-base` **#fafafa** · page background
+- `--surface-raised` **#ffffff** · card and modal background
+- `--surface-muted` **#f4f4f5** · section dividers, hover rows
+- `--border-subtle` **#e4e4e7** · 1px borders
+- `--text-primary` **#18181b** · body text
+- `--text-muted` **#71717a** · metadata, timestamps
 
-### Task type (M6 `tag-style`)
+**Task type (M6 tag-style)**
+- `--type-feature` **#8b5cf6** · violet
+- `--type-bug` **#ef4444** · red
 
-| Token | Hex | When used |
-|---|---|---|
-| `type-feature` | `<TODO>` | Cards tagged `feature` (accent stripe + icon) |
-| `type-bug` | `<TODO>` | Cards tagged `bug` (accent stripe + icon) |
+**Stage tints (column headers, M4)**
+- `--stage-todo` **#dbeafe** · blue-100
+- `--stage-progress` **#ddd6fe** · violet-200
+- `--stage-review` **#fed7aa** · orange-200
+- `--stage-done` **#bbf7d0** · green-200
 
-### Due-date states (M8 `due-tint`)
-
-| Token | Hex | When used |
-|---|---|---|
-| `due-safe` | `<TODO>` | More than 2 days out |
-| `due-warning` | `<TODO>` | Less than 24 hours |
-| `due-overdue` | `<TODO>` | Past due |
-| `due-neutral` | `<TODO>` | Done (overrides date) |
+**Due-date states (M8 due-tint)**
+- `--due-calm` **transparent** · >2 days out (no tint)
+- `--due-warning` **#fef3c7** · amber-100 · under 24 h
+- `--due-alarm` **#fecaca** · red-200 · overdue
+- `--due-done` **#f4f4f5** · neutral · completed cards never alarm
 
 ## 3. Typography
-
-| Role | Font | Why |
-|---|---|---|
-| Heading | `<TODO>` | `<TODO one sentence>` |
-| Body | `<TODO>` | `<TODO one sentence>` |
-| Monospace (tags, badges, code) | `<TODO>` | `<TODO one sentence>` |
-
-Suggested sizes (override only if the design demands it):
-
-- Page title: 24 px / semibold
-- Section header: 16 px / semibold uppercase
-- Card title: 14 px / medium
-- Body: 14 px / regular
-- Caption: 12 px / regular muted
+- **Display and body:** Geist (loaded via Google Fonts) — a near-geometric sans that reads modern without being generic. Fallback: `ui-sans-serif, system-ui, sans-serif`.
+- **Monospace:** Geist Mono — used in the Context textarea and any prompt-shaped UI. Fallback: `ui-monospace, "SF Mono", Menlo, monospace`.
+- **Scale:** `text-3xl` for page headings, `text-base` for body, `text-sm` for card metadata, `text-xs` for pill labels.
 
 ## 4. Component principles
-
-One short sentence per element. These set the tone for the build phase — Person A's modal and Person B's anchor board should both feel like they came from this doc.
-
-- **Cards:** `<TODO>` (e.g. "Light, almost weightless; the only weight is from a 1px border, no shadow except on hover.")
-- **Buttons:** `<TODO>` (e.g. "Solid fill, no gradient, generous padding, rounded-md.")
-- **Modal:** `<TODO>` (e.g. "Centered, max-width-md, slate-900 backdrop at 50% opacity.")
-- **Empty states:** `<TODO>` (e.g. "Dashed border, muted text, never sad.")
-- **Drag affordance (if used):** `<TODO>` (e.g. "None — we use a status dropdown.")
+- Cards: `bg-surface-raised`, `rounded-lg` (8 px), `shadow-sm`, 16 px padding. One assignee avatar top-left, title main, metadata row bottom.
+- Pills: pale fill (`bg-brand-100`-style tint), dark text, `rounded-full`, `px-2 py-0.5 text-xs font-medium`. Status, type, and assignee all use the pill shape.
+- Primary action: filled indigo pill with icon + label. Secondary actions: ghost (text + icon, no fill).
+- Focus ring: `ring-2 ring-brand-500 ring-offset-2` on every interactive element.
+- Motion: Tailwind's default `transition` on hover and state changes; no custom keyframes except for the M7 handoff toast.
 
 ## 5. Voice / microcopy
-
-Three lines of microcopy that capture the tone of the product. Keep it short — these are the words a stressed user reads at 11pm.
-
-| Where | Text |
-|---|---|
-| "+" button label | `<TODO>` (e.g. "+ Task" or "Add task" or "New") |
-| Empty column placeholder | `<TODO>` (e.g. "Nothing here yet — keep going.") |
-| Toast after "Copy as Prompt Context" | `<TODO>` (e.g. "Copied. Now paste it into the AI.") |
-| Confirm-delete message | `<TODO>` (e.g. "Delete this task? You can't undo.") |
-| Handoff toast (M7 `task-owner`) | `<TODO>` (e.g. "Handed off to {name}. They've got it.") |
+- Empty board: *"Nothing in flight. Drop a task to get started."*
+- Add-task button: **+ New task** (not "Add Item" — shorter beats formal)
+- Copy-Context success toast: *"Context copied — paste it into your AI."*
+- Overdue card tooltip: *"This one's past due."*
+- Delete confirmation (if any): *"Delete this task? There's no undo."*
 
 ## 6. Logo / wordmark
 
