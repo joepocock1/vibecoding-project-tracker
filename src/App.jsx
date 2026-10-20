@@ -14,7 +14,7 @@ import { useState, useEffect } from 'react';
  *   - M7  task-owner    : assignee badge + "Hand off to..." dropdown.
  *   - M8  due-tint      : color cards by due date (uses DESIGN.md §2 due-state colors).
  *   - M9  context       : a curated Context briefing field on the modal.
- *   - M10 copy-prompt   : a "Copy as Prompt Context" button that serializes the task + context.
+ *   - M10 copy-context  : a "Copy as Prompt Context" button that serializes the task + context.
  *   - M11 anchors       : the Anchor Board above the Kanban.
  *   - M12 secret-sauce  : the one open-ended thing that makes your tracker yours.
  *
@@ -204,6 +204,42 @@ function timeAgo(iso) {
   return `${diffDay} d ago`;
 }
 
+function serializeContext(task) {
+  const parts = [];
+  parts.push(`# ${task.title}`);
+  if (task.description) {
+    parts.push('', task.description);
+  }
+  if (task.context) {
+    parts.push('', '---', '', task.context);
+  }
+  if (task.contextTool) {
+    parts.push('', `_Previously worked on with: ${task.contextTool}_`);
+  }
+  return parts.join('\n');
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
 export default function App() {
   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', MOCK_TASKS);
 
@@ -253,6 +289,16 @@ export default function App() {
     setTasks(tasks.map((t) =>
       t.id === taskId ? { ...t, assignee: newAssignee } : t
     ));
+  };
+
+  const [toast, setToast] = useState(null);
+
+  const handleCopyContext = async (task) => {
+    const ok = await copyToClipboard(serializeContext(task));
+    setToast(ok
+      ? 'Context copied — paste it into your AI.'
+      : 'Could not copy — try again.');
+    setTimeout(() => setToast(null), 2000);
   };
 
   return (
@@ -355,31 +401,46 @@ export default function App() {
                                 </span>
                               </div>
 
-                              {TEAM.length <= 1 ? (
-                                <select
-                                  disabled
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="shrink-0 rounded-full border border-border-subtle bg-surface-muted px-2 py-0.5 text-xs text-text-muted disabled:opacity-70 disabled:cursor-not-allowed"
-                                  title="Only one assignee in the solo build"
-                                >
-                                  <option>Hand off… (solo)</option>
-                                </select>
-                              ) : (
-                                <select
-                                  value=""
-                                  onChange={(e) => {
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
                                     e.stopPropagation();
-                                    if (e.target.value) handleHandoff(task.id, e.target.value);
+                                    handleCopyContext(task);
                                   }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="shrink-0 rounded-full border border-border-subtle bg-surface-raised px-2 py-0.5 text-xs text-text-muted hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                                  aria-label="Copy context"
+                                  title="Copy context"
+                                  className="shrink-0 rounded-full border border-border-subtle bg-surface-raised px-2 py-0.5 text-xs text-text-muted hover:border-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
                                 >
-                                  <option value="" disabled>Hand off to…</option>
-                                  {TEAM.filter((name) => name !== task.assignee).map((name) => (
-                                    <option key={name} value={name}>{name}</option>
-                                  ))}
-                                </select>
-                              )}
+                                  📋
+                                </button>
+
+                                {TEAM.length <= 1 ? (
+                                  <select
+                                    disabled
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="shrink-0 rounded-full border border-border-subtle bg-surface-muted px-2 py-0.5 text-xs text-text-muted disabled:opacity-70 disabled:cursor-not-allowed"
+                                    title="Only one assignee in the solo build"
+                                  >
+                                    <option>Hand off… (solo)</option>
+                                  </select>
+                                ) : (
+                                  <select
+                                    value=""
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      if (e.target.value) handleHandoff(task.id, e.target.value);
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="shrink-0 rounded-full border border-border-subtle bg-surface-raised px-2 py-0.5 text-xs text-text-muted hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                                  >
+                                    <option value="" disabled>Hand off to…</option>
+                                    {TEAM.filter((name) => name !== task.assignee).map((name) => (
+                                      <option key={name} value={name}>{name}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -399,14 +460,25 @@ export default function App() {
           initialTask={editing === 'new' ? null : editing}
           onSave={saveTask}
           onDelete={() => deleteTask(editing.id)}
+          onCopy={() => editing && editing !== 'new' && handleCopyContext(editing)}
           onClose={closeModal}
         />
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-4 right-4 z-50 rounded-lg bg-text-primary px-4 py-2 text-sm text-white shadow-lg"
+        >
+          {toast}
+        </div>
       )}
     </div>
   );
 }
 
-function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
+function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
   const [formValues, setFormValues] = useState(
     initialTask
       ? {
@@ -567,6 +639,16 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
               <p className="mt-1 text-xs text-text-muted">
                 Last updated {timeAgo(initialTask.contextUpdatedAt)}
               </p>
+            )}
+            {initialTask && (
+              <button
+                type="button"
+                onClick={onCopy}
+                className="mt-2 inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-raised px-3 py-1 text-xs font-medium text-text-primary hover:border-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+              >
+                <span aria-hidden="true">📋</span>
+                <span>Copy Context</span>
+              </button>
             )}
           </div>
 
