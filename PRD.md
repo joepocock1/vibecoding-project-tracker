@@ -89,9 +89,7 @@ Four columns, in this order, with these exact labels in the UI:
 3. **Review**
 4. **Done**
 
-## 8. Team
-
-Fill these in before tagging `prd-done`:
+## 8. Lead
 
 | Slot | Name | GitHub handle |
 |---|---|---|
