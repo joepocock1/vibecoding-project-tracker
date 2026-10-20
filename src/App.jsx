@@ -44,7 +44,7 @@ export const STAGES = [
 
 // Replace these placeholders with the three names from PRD §8 before M4.
 // They become the only valid values for `Task.assignee`.
-export const TEAM = ['Joe'];
+export const TEAM = ['Teammate A', 'Teammate B', 'Teammate C'];
 
 /**
  * A tiny localStorage hook — survives reloads, no library needed.

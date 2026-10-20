@@ -89,36 +89,40 @@ Four columns, in this order, with these exact labels in the UI:
 3. **Review**
 4. **Done**
 
-## 8. Lead
+## 8. Team
+
+Fill these in before tagging `prd-done`:
 
 | Slot | Name | GitHub handle |
 |---|---|---|
-| Lead | Joe Pocock | joepocock1 |
+| Teammate A | Joe Pocock | joepocock1 |
+| Teammate B | — (solo build) | — |
+| Teammate C | — (solo build) | — |
 
-This name is the only allowed value for Task.assignee. No auth — the
-dropdown has one option. Multi-user support is out of scope for the
-solo hackathon build but the field is retained in the data model so a
-future extension can add it without migration.
+These three names become the **only** allowed values for `Task.assignee`. No auth — just a dropdown.
 
 ## 9. Milestone ownership
 
-| # | Tag | Title | Owner |
-|---|---|---|---|
-| 3  | design-done           | Design system + voice (DESIGN.md)       | Joe |
-| 4  | data-model            | Task model + board view                 | Joe |
-| 5  | crud-modal            | Add / edit / delete modal               | Joe |
-| 6  | tag-style             | Feature / bug colors                    | Joe |
-| 7  | task-owner            | Owner indicator + handoff               | Joe |
-| 8  | due-tint              | Due-date color tinting                  | Joe |
-| 9  | task-context          | Context field on the task modal         | Joe |
-| 10 | copy-context          | "Copy Context" button                   | Joe |
-| 11 | project-deliverables  | Deliverable Anchor Board                | Joe |
-| 12 | secret-sauce          | The one thing that makes it mine        | Joe |
-| 13 | pitch-ready           | Demo + pitch rehearsal                  | Joe |
+Fill in the owner column. Recommended default in **bold**; change if your team has different strengths.
 
-All milestones owned by the solo developer. Build order follows the
-slide-deck phase chain: M2+M3 together, then M4→M5 before any of
-M6/M7/M8/M11, M9+M10 as the differentiator pair, M12 and M13 last.
+| # | Tag | Title | Suggested owner | Final owner |
+|---|---|---|---|---|
+| 3 | `design-done` | Design system + voice (DESIGN.md) | **B** | Joe |
+| 4 | `data-model` | Task model + board view | **A** | Joe |
+| 5 | `crud-modal` | Add / edit / delete modal | **A** | Joe |
+| 6 | `tag-style` | Feature / bug colors | **B** | Joe |
+| 7 | `task-owner` | Owner indicator + handoff | **A** | Joe |
+| 8 | `due-tint` | Due-date color tinting | **B** | Joe |
+| 9 | `context` | Context field on the task modal | **C** | Joe |
+| 10 | `copy-prompt` | "Copy as Prompt Context" button | **C** | Joe |
+| 11 | `anchors` | Deliverable Anchor Board | **B** | Joe |
+| 12 | `secret-sauce` | The one thing that makes it yours | **C / All** | Joe |
+| 13 | `pitch-ready` | Demo + pitch rehearsal | **All** | Joe |
+
+
+Track A owns the state model and task ownership. Track B owns the visuals (and design — M3 runs parallel to M2 so the team starts Phase 3 with the palette already chosen). Track C owns the differentiator features (M9 + M10 — the context field and the Copy-as-Prompt button) and usually leads on M12 secret-sauce. Put your strongest prompter on Track C.
+
+**Dependency note.** M3 (`design-done`) runs **in parallel with M2** — Person B drafts DESIGN.md and pastes the colors into `tailwind.config.js` while the rest of the team reviews the PRD. M6 / M7 / M8 / M11 all depend on M4 + M5 being done first. While Person A builds M4+M5 (first ~60 min of Phase 3), Person C should draft the Markdown template for the "Copy as Prompt Context" output (M10). M12 `secret-sauce` is open-ended — pick whatever makes the tracker uniquely yours; constraint is "must be visible in the demo and must not break anything else."
 
 ## 10. AI / vibe coding angle
 
@@ -137,9 +141,11 @@ Keep the Context field of each real task up to date as you work. By the end of t
 
 ## 11. Team identity
 
-- **Project name:** vibeline
-- **Tagline:** Kanban that remembers your prompts.
-- **Tracker URL after deploy:** TBD (filled in after Vercel deploy)
+Fill in:
+
+- **Team name:** vibeline
+- **Tagline (one sentence):** Kanban that remembers your prompts.
+- **Tracker URL after deploy:** TBD (Vercel will give it to you)
 
 ## 12. Out of scope (do not build)
 
