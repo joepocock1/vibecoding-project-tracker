@@ -163,8 +163,8 @@ export default function App() {
     <div className="min-h-screen bg-surface-base p-6">
       <header className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Vibecoding Project Tracker
+          <h1 className="text-2xl font-bold text-text-primary">
+            vibeline
           </h1>
           <p className="text-sm text-text-muted">
             vibeline — Kanban that remembers your prompts.
