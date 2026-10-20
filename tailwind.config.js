@@ -4,7 +4,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Tweak in M6 (tag-style) and M8 (due-tint)
         brand: { 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5' },
         surface: { base: '#fafafa', raised: '#ffffff', muted: '#f4f4f5' },
         border: { subtle: '#e4e4e7' },
