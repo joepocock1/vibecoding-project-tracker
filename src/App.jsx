@@ -85,6 +85,9 @@ const MOCK_TASKS = [
     assignee: 'Joe Pocock',
     dueDate: null,
     createdDate: TODAY,
+    context: '',
+    contextTool: null,
+    contextUpdatedAt: null,
   },
   {
     id: 't2',
@@ -95,6 +98,9 @@ const MOCK_TASKS = [
     assignee: 'Joe Pocock',
     dueDate: null,
     createdDate: TODAY,
+    context: '',
+    contextTool: null,
+    contextUpdatedAt: null,
   },
   {
     id: 't3',
@@ -105,6 +111,19 @@ const MOCK_TASKS = [
     assignee: 'Joe Pocock',
     dueDate: TODAY,
     createdDate: TODAY,
+    context: `## Background
+Starter repo already defines STAGES (4 columns) and the Task shape in PRD §5.
+
+## Constraints
+Static Tailwind class names only (JIT). Keep the useLocalStorage hook.
+
+## Tried so far
+Scaffolded columns via STAGES.map with the STAGE_BG lookup; cards show avatar + title + assignee.
+
+## Pick up where you left off
+Add the modal (M5) next: + New task button, click a card to edit, Delete inside the modal.`,
+    contextTool: 'Claude',
+    contextUpdatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 't4',
@@ -115,6 +134,9 @@ const MOCK_TASKS = [
     assignee: 'Joe Pocock',
     dueDate: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
     createdDate: TODAY,
+    context: '',
+    contextTool: null,
+    contextUpdatedAt: null,
   },
 ];
 
@@ -156,6 +178,32 @@ function getDueState(task) {
   return 'calm';
 }
 
+const AI_TOOLS = ['Claude', 'ChatGPT', 'Cursor', 'Lovable', 'Replit', 'Other'];
+
+const CONTEXT_TEMPLATE = `## Background
+
+
+## Constraints
+
+
+## Tried so far
+
+
+## Pick up where you left off
+`;
+
+function timeAgo(iso) {
+  if (!iso) return null;
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay} d ago`;
+}
+
 export default function App() {
   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', MOCK_TASKS);
 
@@ -170,15 +218,26 @@ export default function App() {
   const closeModal = () => setEditing(null);
 
   const saveTask = (values) => {
+    const now = new Date().toISOString();
     if (editing === 'new') {
       const task = {
         ...values,
         id: `t${Date.now()}`,
         createdDate: new Date().toISOString().slice(0, 10),
+        contextUpdatedAt: values.context ? now : null,
       };
       setTasks([...tasks, task]);
     } else {
-      setTasks(tasks.map(t => t.id === editing.id ? { ...editing, ...values } : t));
+      const contextChanged = values.context !== (editing.context ?? '');
+      setTasks(tasks.map((t) =>
+        t.id === editing.id
+          ? {
+              ...editing,
+              ...values,
+              contextUpdatedAt: contextChanged ? now : (editing.contextUpdatedAt ?? null),
+            }
+          : t
+      ));
     }
     closeModal();
   };
@@ -357,6 +416,8 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
           status: initialTask.status ?? 'todo',
           assignee: initialTask.assignee ?? (TEAM[0] ?? ''),
           dueDate: initialTask.dueDate ?? '',
+          context: initialTask.context ?? CONTEXT_TEMPLATE,
+          contextTool: initialTask.contextTool ?? '',
         }
       : {
           title: '',
@@ -365,6 +426,8 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
           status: 'todo',
           assignee: TEAM[0] ?? '',
           dueDate: '',
+          context: CONTEXT_TEMPLATE,
+          contextTool: '',
         }
   );
 
@@ -396,7 +459,7 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
         <form
           onSubmit={handleSubmit}
           onClick={(e) => e.stopPropagation()}
-          className="pointer-events-auto w-full max-w-lg rounded-lg bg-surface-raised p-6 shadow-lg space-y-4"
+          className="pointer-events-auto w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-surface-raised p-6 shadow-lg space-y-4"
         >
           <h2 className="text-lg font-semibold text-text-primary">
             {mode === 'new' ? 'New task' : 'Edit task'}
@@ -486,6 +549,42 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
               onChange={handleChange('dueDate')}
               className={fieldClass}
             />
+          </div>
+
+          <div>
+            <label htmlFor="task-context" className="block text-xs font-medium text-text-muted mb-1">
+              Context
+            </label>
+            <textarea
+              id="task-context"
+              value={formValues.context}
+              onChange={(e) => setFormValues({ ...formValues, context: e.target.value })}
+              rows={8}
+              className="block w-full rounded-md border border-border-subtle bg-surface-raised px-3 py-2 font-mono text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+              placeholder="Markdown briefing for the next AI session"
+            />
+            {initialTask?.contextUpdatedAt && (
+              <p className="mt-1 text-xs text-text-muted">
+                Last updated {timeAgo(initialTask.contextUpdatedAt)}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="task-context-tool" className="block text-xs font-medium text-text-muted mb-1">
+              AI tool
+            </label>
+            <select
+              id="task-context-tool"
+              value={formValues.contextTool ?? ''}
+              onChange={(e) => setFormValues({ ...formValues, contextTool: e.target.value || null })}
+              className="block w-full rounded-md border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+            >
+              <option value="">— None —</option>
+              {AI_TOOLS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center justify-between pt-2">
