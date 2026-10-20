@@ -44,7 +44,7 @@ export const STAGES = [
 
 // Replace these placeholders with the three names from PRD §8 before M4.
 // They become the only valid values for `Task.assignee`.
-export const TEAM = ['Joe Pocock'];
+export const TEAM = ['Joe Pocock', 'Alex Rivera', 'Sam Chen'];
 
 /**
  * A tiny localStorage hook — survives reloads, no library needed.
@@ -97,7 +97,7 @@ const MOCK_TASKS = [
     description: 'Esc works, X works, clicking the dim overlay does nothing in Safari 17.',
     type: 'bug',
     status: 'todo',
-    assignee: 'Joe Pocock',
+    assignee: 'Alex Rivera',
     dueDate: YESTERDAY,
     createdDate: TODAY,
     context: `## Background
@@ -144,7 +144,7 @@ Drop zone highlight is wired with ring-brand-500. Consider a small drop animatio
     description: 'New tasks start with Background / Constraints / Tried so far / Pick up headings.',
     type: 'feature',
     status: 'review',
-    assignee: 'Joe Pocock',
+    assignee: 'Sam Chen',
     dueDate: null,
     createdDate: TODAY,
     context: '',
@@ -170,7 +170,7 @@ Drop zone highlight is wired with ring-brand-500. Consider a small drop animatio
     description: 'Indigo brand, Clachan-inspired pastel column tints, Geist font.',
     type: 'feature',
     status: 'done',
-    assignee: 'Joe Pocock',
+    assignee: 'Sam Chen',
     dueDate: null,
     createdDate: TODAY,
     context: '',
@@ -196,7 +196,7 @@ Drop zone highlight is wired with ring-brand-500. Consider a small drop animatio
     description: 'Markdown block with title, description, context, tool footer.',
     type: 'bug',
     status: 'done',
-    assignee: 'Joe Pocock',
+    assignee: 'Alex Rivera',
     dueDate: null,
     createdDate: TODAY,
     context: '',

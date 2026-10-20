@@ -96,8 +96,8 @@ Fill these in before tagging `prd-done`:
 | Slot | Name | GitHub handle |
 |---|---|---|
 | Teammate A | Joe Pocock | joepocock1 |
-| Teammate B | — (solo build) | — |
-| Teammate C | — (solo build) | — |
+| Teammate B | Alex Rivera | alexrivera |
+| Teammate C | Sam Chen | samchen |
 
 These three names become the **only** allowed values for `Task.assignee`. No auth — just a dropdown.
 
@@ -145,7 +145,7 @@ Fill in:
 
 - **Team name:** vibeline
 - **Tagline (one sentence):** Kanban that remembers your prompts.
-- **Tracker URL after deploy:** TBD (Vercel will give it to you)
+- **Tracker URL after deploy:** https://vibecoding-project-tracker-xi.vercel.app
 
 ## 12. Out of scope (do not build)
 
