@@ -110,7 +110,7 @@ const MOCK_TASKS = [
     id: 't4',
     title: 'Wire up the "Copy Context" button',
     description: 'Serialize task + context to Markdown on clipboard.',
-    type: 'feature',
+    type: 'bug',
     status: 'todo',
     assignee: 'Joe Pocock',
     dueDate: TODAY,
@@ -123,6 +123,21 @@ const STAGE_BG = {
   'in-progress': 'bg-stage-progress',
   'review':      'bg-stage-review',
   'done':        'bg-stage-done',
+};
+
+const TYPE_META = {
+  feature: {
+    label: 'Feature',
+    icon: '✨',
+    pillClass: 'bg-type-feature-tint text-type-feature',
+    borderClass: 'border-type-feature',
+  },
+  bug: {
+    label: 'Bug',
+    icon: '🐛',
+    pillClass: 'bg-type-bug-tint text-type-bug',
+    borderClass: 'border-type-bug',
+  },
 };
 
 export default function App() {
@@ -217,12 +232,13 @@ export default function App() {
                     .join('')
                     .slice(0, 2)
                     .toUpperCase();
+                  const typeMeta = TYPE_META[task.type];
                   return (
                     <li key={task.id}>
                       <button
                         type="button"
                         onClick={() => openEdit(task)}
-                        className="w-full rounded-lg bg-surface-raised p-4 text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                        className={`border-l-4 ${typeMeta.borderClass} w-full rounded-lg bg-surface-raised p-4 text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2`}
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
@@ -232,9 +248,13 @@ export default function App() {
                             <h3 className="text-sm font-medium text-text-primary">
                               {task.title}
                             </h3>
-                            <p className="mt-1 text-xs text-text-muted">
-                              {task.assignee}
-                            </p>
+                            <div className="mt-1 flex items-center gap-2">
+                              <span className="text-xs text-text-muted">{task.assignee}</span>
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeMeta.pillClass}`}>
+                                <span aria-hidden="true">{typeMeta.icon}</span>
+                                <span>{typeMeta.label}</span>
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </button>
@@ -350,6 +370,12 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onClose }) {
               <option value="feature">Feature</option>
               <option value="bug">Bug</option>
             </select>
+            <div className="mt-1">
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_META[formValues.type].pillClass}`}>
+                <span aria-hidden="true">{TYPE_META[formValues.type].icon}</span>
+                <span>{TYPE_META[formValues.type].label}</span>
+              </span>
+            </div>
           </div>
 
           <div>

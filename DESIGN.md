@@ -30,8 +30,10 @@ All values are hex and are mirrored in `tailwind.config.js` under `theme.extend.
 - `--text-muted` **#71717a** · metadata, timestamps
 
 **Task type (M6 tag-style)**
-- `--type-feature` **#8b5cf6** · violet
-- `--type-bug` **#ef4444** · red
+- `--type-feature` **#8b5cf6** · violet accent (left border and icon)
+- `--type-feature-tint` **#ede9fe** · violet-100 (pill fill)
+- `--type-bug` **#ef4444** · red accent (left border and icon)
+- `--type-bug-tint` **#fee2e2** · red-100 (pill fill)
 
 **Stage tints (column headers, M4)**
 - `--stage-todo` **#dbeafe** · blue-100
