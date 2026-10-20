@@ -174,6 +174,12 @@ export default function App() {
     }
   };
 
+  const handleHandoff = (taskId, newAssignee) => {
+    setTasks(tasks.map((t) =>
+      t.id === taskId ? { ...t, assignee: newAssignee } : t
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-surface-base p-6">
       <header className="mb-6 flex items-end justify-between">
@@ -235,10 +241,17 @@ export default function App() {
                   const typeMeta = TYPE_META[task.type];
                   return (
                     <li key={task.id}>
-                      <button
-                        type="button"
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => openEdit(task)}
-                        className={`border-l-4 ${typeMeta.borderClass} w-full rounded-lg bg-surface-raised p-4 text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openEdit(task);
+                          }
+                        }}
+                        className={`border-l-4 ${typeMeta.borderClass} w-full cursor-pointer rounded-lg bg-surface-raised p-4 shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2`}
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
@@ -248,16 +261,44 @@ export default function App() {
                             <h3 className="text-sm font-medium text-text-primary">
                               {task.title}
                             </h3>
-                            <div className="mt-1 flex items-center gap-2">
-                              <span className="text-xs text-text-muted">{task.assignee}</span>
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeMeta.pillClass}`}>
-                                <span aria-hidden="true">{typeMeta.icon}</span>
-                                <span>{typeMeta.label}</span>
-                              </span>
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="truncate text-xs text-text-muted">{task.assignee}</span>
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeMeta.pillClass}`}>
+                                  <span aria-hidden="true">{typeMeta.icon}</span>
+                                  <span>{typeMeta.label}</span>
+                                </span>
+                              </div>
+
+                              {TEAM.length <= 1 ? (
+                                <select
+                                  disabled
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="shrink-0 rounded-full border border-border-subtle bg-surface-muted px-2 py-0.5 text-xs text-text-muted disabled:opacity-70 disabled:cursor-not-allowed"
+                                  title="Only one assignee in the solo build"
+                                >
+                                  <option>Hand off… (solo)</option>
+                                </select>
+                              ) : (
+                                <select
+                                  value=""
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    if (e.target.value) handleHandoff(task.id, e.target.value);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="shrink-0 rounded-full border border-border-subtle bg-surface-raised px-2 py-0.5 text-xs text-text-muted hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                                >
+                                  <option value="" disabled>Hand off to…</option>
+                                  {TEAM.filter((name) => name !== task.assignee).map((name) => (
+                                    <option key={name} value={name}>{name}</option>
+                                  ))}
+                                </select>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </button>
+                      </div>
                     </li>
                   );
                 })}
