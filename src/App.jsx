@@ -113,7 +113,7 @@ const MOCK_TASKS = [
     type: 'bug',
     status: 'todo',
     assignee: 'Joe Pocock',
-    dueDate: TODAY,
+    dueDate: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
     createdDate: TODAY,
   },
 ];
@@ -139,6 +139,22 @@ const TYPE_META = {
     borderClass: 'border-type-bug',
   },
 };
+
+const DUE_META = {
+  calm:    { bgClass: 'bg-surface-raised', icon: null, label: null },
+  warning: { bgClass: 'bg-due-warning',    icon: '⏰', label: 'Due today' },
+  alarm:   { bgClass: 'bg-due-alarm',      icon: '🔥', label: 'Overdue' },
+  done:    { bgClass: 'bg-due-done',       icon: null, label: null },
+};
+
+function getDueState(task) {
+  if (task.status === 'done') return 'done';
+  if (!task.dueDate) return 'calm';
+  const today = new Date().toISOString().slice(0, 10);
+  if (task.dueDate < today) return 'alarm';
+  if (task.dueDate === today) return 'warning';
+  return 'calm';
+}
 
 export default function App() {
   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', MOCK_TASKS);
@@ -239,6 +255,8 @@ export default function App() {
                     .slice(0, 2)
                     .toUpperCase();
                   const typeMeta = TYPE_META[task.type];
+                  const dueState = getDueState(task);
+                  const dueMeta  = DUE_META[dueState];
                   return (
                     <li key={task.id}>
                       <div
@@ -251,8 +269,16 @@ export default function App() {
                             openEdit(task);
                           }
                         }}
-                        className={`border-l-4 ${typeMeta.borderClass} w-full cursor-pointer rounded-lg bg-surface-raised p-4 shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2`}
+                        className={`border-l-4 ${typeMeta.borderClass} w-full cursor-pointer rounded-lg ${dueMeta.bgClass} p-4 shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2`}
                       >
+                        {dueMeta.icon && (
+                          <div className="mb-2 flex justify-end">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-surface-raised/60 px-2 py-0.5 text-xs font-medium text-text-primary">
+                              <span aria-hidden="true">{dueMeta.icon}</span>
+                              <span>{dueMeta.label}</span>
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-start gap-3">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
                             {initials}
