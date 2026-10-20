@@ -74,16 +74,18 @@ export function useLocalStorage(key, initialValue) {
 }
 
 const TODAY = new Date().toISOString().slice(0, 10);
+const YESTERDAY = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+const IN_THREE_DAYS = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
 
 const MOCK_TASKS = [
   {
     id: 't1',
-    title: 'Set up fork and link to Hackathon Portal',
-    description: 'Fork, clone, connect webhook, push git-linked tag.',
+    title: 'Dark mode toggle',
+    description: 'Users have asked for a dark variant. Tokens exist in tailwind.config.js — plumbing + persistence left.',
     type: 'feature',
-    status: 'done',
+    status: 'todo',
     assignee: 'Joe Pocock',
-    dueDate: null,
+    dueDate: IN_THREE_DAYS,
     createdDate: TODAY,
     context: '',
     contextTool: null,
@@ -91,8 +93,68 @@ const MOCK_TASKS = [
   },
   {
     id: 't2',
-    title: 'Fill in PRD TODOs',
-    description: 'Team, milestone ownership, team identity.',
+    title: 'Modal does not close on overlay click in Safari',
+    description: 'Esc works, X works, clicking the dim overlay does nothing in Safari 17.',
+    type: 'bug',
+    status: 'todo',
+    assignee: 'Joe Pocock',
+    dueDate: YESTERDAY,
+    createdDate: TODAY,
+    context: `## Background
+Overlay uses pointer-events-none on the wrapper and pointer-events-auto on the panel. Click handler on the wrapper doesn't fire in Safari.
+
+## Constraints
+Must still allow nested interactive content (select, textarea) inside the panel.
+
+## Tried so far
+- Moved onClick from wrapper to a sibling overlay div (worked in Chrome, same bug in Safari)
+- stopPropagation on the panel's onClick (no change)
+
+## Pick up where you left off
+Try z-index layering: overlay z-40 with its own onClick, panel z-50 with its own stopPropagation. Confirm in Safari 17 on macOS.`,
+    contextTool: 'Claude',
+    contextUpdatedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 't3',
+    title: 'Drag-and-drop between columns',
+    description: 'Native HTML5 drag API, native keyboard access via the modal\'s status dropdown as backup.',
+    type: 'feature',
+    status: 'in-progress',
+    assignee: 'Joe Pocock',
+    dueDate: TODAY,
+    createdDate: TODAY,
+    context: `## Background
+M12 secret sauce. Native drag over @dnd-kit to avoid new deps for a hackathon demo.
+
+## Constraints
+Nested interactive elements (copy button, handoff select) must not start a card drag.
+
+## Tried so far
+draggable attribute on the card wrapper, draggable={false} on nested buttons and selects. stopPropagation retained as defence.
+
+## Pick up where you left off
+Drop zone highlight is wired with ring-brand-500. Consider a small drop animation if time permits.`,
+    contextTool: 'Claude',
+    contextUpdatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 't4',
+    title: 'Context field pre-fills Markdown template',
+    description: 'New tasks start with Background / Constraints / Tried so far / Pick up headings.',
+    type: 'feature',
+    status: 'review',
+    assignee: 'Joe Pocock',
+    dueDate: null,
+    createdDate: TODAY,
+    context: '',
+    contextTool: null,
+    contextUpdatedAt: null,
+  },
+  {
+    id: 't5',
+    title: 'Set up fork and link to Hackathon Portal',
+    description: 'Fork, clone, webhook, register on the dashboard.',
     type: 'feature',
     status: 'done',
     assignee: 'Joe Pocock',
@@ -103,36 +165,39 @@ const MOCK_TASKS = [
     contextUpdatedAt: null,
   },
   {
-    id: 't3',
-    title: 'Build four-column Kanban board',
-    description: 'Columns from STAGES, cards show title + assignee.',
+    id: 't6',
+    title: 'Design system + Tailwind tokens',
+    description: 'Indigo brand, Clachan-inspired pastel column tints, Geist font.',
     type: 'feature',
-    status: 'in-progress',
+    status: 'done',
     assignee: 'Joe Pocock',
-    dueDate: TODAY,
+    dueDate: null,
     createdDate: TODAY,
-    context: `## Background
-Starter repo already defines STAGES (4 columns) and the Task shape in PRD §5.
-
-## Constraints
-Static Tailwind class names only (JIT). Keep the useLocalStorage hook.
-
-## Tried so far
-Scaffolded columns via STAGES.map with the STAGE_BG lookup; cards show avatar + title + assignee.
-
-## Pick up where you left off
-Add the modal (M5) next: + New task button, click a card to edit, Delete inside the modal.`,
-    contextTool: 'Claude',
-    contextUpdatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    context: '',
+    contextTool: null,
+    contextUpdatedAt: null,
   },
   {
-    id: 't4',
-    title: 'Wire up the "Copy Context" button',
-    description: 'Serialize task + context to Markdown on clipboard.',
-    type: 'bug',
-    status: 'todo',
+    id: 't7',
+    title: 'Build four-column Kanban board',
+    description: 'STAGES locked, cards + localStorage persistence.',
+    type: 'feature',
+    status: 'done',
     assignee: 'Joe Pocock',
-    dueDate: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+    dueDate: null,
+    createdDate: TODAY,
+    context: '',
+    contextTool: null,
+    contextUpdatedAt: null,
+  },
+  {
+    id: 't8',
+    title: 'Wire up Copy-Context button serialization',
+    description: 'Markdown block with title, description, context, tool footer.',
+    type: 'bug',
+    status: 'done',
+    assignee: 'Joe Pocock',
+    dueDate: null,
     createdDate: TODAY,
     context: '',
     contextTool: null,
