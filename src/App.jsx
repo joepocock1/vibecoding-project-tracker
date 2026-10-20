@@ -162,6 +162,15 @@ const TYPE_META = {
   },
 };
 
+const ANCHOR_SLOTS = [
+  { id: 'presentation',  label: 'Presentation' },
+  { id: 'demo',          label: 'Demo' },
+  { id: 'report',        label: 'Report' },
+  { id: 'documentation', label: 'Documentation' },
+];
+
+const INITIAL_ANCHORS = ANCHOR_SLOTS.map((s) => ({ ...s, url: null }));
+
 const DUE_META = {
   calm:    { bgClass: 'bg-surface-raised', icon: null, label: null },
   warning: { bgClass: 'bg-due-warning',    icon: '⏰', label: 'Due today' },
@@ -246,8 +255,13 @@ export default function App() {
   const [editing, setEditing] = useState(null);
   // null = modal closed, 'new' = new-task form, Task object = edit mode.
 
-  // TODO M11 anchors:
-  //   const [anchors, setAnchors] = useLocalStorage('vibetracker.anchors', [...]);
+  const [anchors, setAnchors] = useLocalStorage('vibetracker.anchors', INITIAL_ANCHORS);
+
+  const updateAnchor = (id, url) => {
+    setAnchors(anchors.map((a) =>
+      a.id === id ? { ...a, url: url || null } : a
+    ));
+  };
 
   const openNew  = () => setEditing('new');
   const openEdit = (task) => setEditing(task);
@@ -321,7 +335,48 @@ export default function App() {
         </button>
       </header>
 
-      {/* TODO M11 anchors: render the Anchor Board (Presentation / Demo / Report / Documentation) above the board. */}
+      <section className="mb-6">
+        <h2 className="mb-2 text-sm font-semibold text-text-primary">Deliverables</h2>
+        <div className="grid grid-cols-4 gap-4">
+          {anchors.map((anchor) => (
+            <section key={anchor.id} className="rounded-lg bg-surface-raised p-4 shadow-sm">
+              <div className="mb-2 flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className={`inline-block h-2.5 w-2.5 rounded-full ${
+                    anchor.url ? 'bg-brand-500' : 'border border-text-muted'
+                  }`}
+                />
+                <h3 className="text-sm font-semibold text-text-primary">{anchor.label}</h3>
+                {anchor.url && (
+                  <a
+                    href={anchor.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-auto text-xs font-medium text-brand-500 hover:text-brand-600"
+                  >
+                    Open ↗
+                  </a>
+                )}
+                <span className="sr-only">
+                  {anchor.url ? 'Link set' : 'No link set'}
+                </span>
+              </div>
+              <label htmlFor={`anchor-${anchor.id}`} className="sr-only">
+                {anchor.label} URL
+              </label>
+              <input
+                id={`anchor-${anchor.id}`}
+                type="url"
+                value={anchor.url ?? ''}
+                onChange={(e) => updateAnchor(anchor.id, e.target.value)}
+                placeholder="Paste link"
+                className="block w-full rounded-md border border-border-subtle bg-surface-base px-2 py-1 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+              />
+            </section>
+          ))}
+        </div>
+      </section>
 
       {/*
         TODO M4 data-model:
