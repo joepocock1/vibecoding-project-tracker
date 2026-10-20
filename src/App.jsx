@@ -44,7 +44,7 @@ export const STAGES = [
 
 // Replace these placeholders with the three names from PRD §8 before M4.
 // They become the only valid values for `Task.assignee`.
-export const TEAM = ['Teammate A', 'Teammate B', 'Teammate C'];
+export const TEAM = ['Joe Pocock'];
 
 /**
  * A tiny localStorage hook — survives reloads, no library needed.
@@ -73,10 +73,61 @@ export function useLocalStorage(key, initialValue) {
   return [value, setValue];
 }
 
+const TODAY = new Date().toISOString().slice(0, 10);
+
+const MOCK_TASKS = [
+  {
+    id: 't1',
+    title: 'Set up fork and link to Hackathon Portal',
+    description: 'Fork, clone, connect webhook, push git-linked tag.',
+    type: 'feature',
+    status: 'done',
+    assignee: 'Joe Pocock',
+    dueDate: null,
+    createdDate: TODAY,
+  },
+  {
+    id: 't2',
+    title: 'Fill in PRD TODOs',
+    description: 'Team, milestone ownership, team identity.',
+    type: 'feature',
+    status: 'done',
+    assignee: 'Joe Pocock',
+    dueDate: null,
+    createdDate: TODAY,
+  },
+  {
+    id: 't3',
+    title: 'Build four-column Kanban board',
+    description: 'Columns from STAGES, cards show title + assignee.',
+    type: 'feature',
+    status: 'in-progress',
+    assignee: 'Joe Pocock',
+    dueDate: TODAY,
+    createdDate: TODAY,
+  },
+  {
+    id: 't4',
+    title: 'Wire up the "Copy Context" button',
+    description: 'Serialize task + context to Markdown on clipboard.',
+    type: 'feature',
+    status: 'todo',
+    assignee: 'Joe Pocock',
+    dueDate: TODAY,
+    createdDate: TODAY,
+  },
+];
+
+const STAGE_BG = {
+  'todo':        'bg-stage-todo',
+  'in-progress': 'bg-stage-progress',
+  'review':      'bg-stage-review',
+  'done':        'bg-stage-done',
+};
+
 export default function App() {
-  // TODO M4 data-model:
-  //   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', [/* 3-4 seed tasks */]);
-  //
+  const [tasks] = useLocalStorage('vibetracker.tasks', MOCK_TASKS);
+
   // TODO M5 crud-modal:
   //   const [editing, setEditing] = useState(null);
   //
@@ -84,15 +135,14 @@ export default function App() {
   //   const [anchors, setAnchors] = useLocalStorage('vibetracker.anchors', [...]);
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen bg-surface-base p-6">
       <header className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
             Vibecoding Project Tracker
           </h1>
-          <p className="text-sm text-slate-500">
-            {/* Replace this line with your team name from PRD §11. */}
-            Team starter
+          <p className="text-sm text-text-muted">
+            vibeline — Kanban that remembers your prompts.
           </p>
         </div>
       </header>
@@ -109,8 +159,57 @@ export default function App() {
           Add a "+" button that opens a modal with every Task field.
           Clicking a card should open the same modal in edit mode.
       */}
-      <main className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400">
-        Build the four-column board here · M4
+      <main className="grid grid-cols-4 gap-4">
+        {STAGES.map((stage) => {
+          const stageTasks = tasks.filter((t) => t.status === stage.id);
+          return (
+            <section
+              key={stage.id}
+              className="rounded-lg bg-surface-muted p-3"
+            >
+              <header
+                className={`mb-3 rounded-md px-3 py-2 ${STAGE_BG[stage.id]}`}
+              >
+                <h2 className="text-sm font-semibold text-text-primary">
+                  {stage.label}
+                  <span className="ml-2 text-xs font-normal text-text-muted">
+                    {stageTasks.length}
+                  </span>
+                </h2>
+              </header>
+              <ul className="space-y-2">
+                {stageTasks.map((task) => {
+                  const initials = task.assignee
+                    .split(' ')
+                    .map((w) => w[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return (
+                    <li
+                      key={task.id}
+                      className="rounded-lg bg-surface-raised p-4 shadow-sm"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
+                          {initials}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-medium text-text-primary">
+                            {task.title}
+                          </h3>
+                          <p className="mt-1 text-xs text-text-muted">
+                            {task.assignee}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
       </main>
     </div>
   );
