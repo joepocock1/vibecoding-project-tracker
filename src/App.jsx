@@ -536,30 +536,28 @@ export default function App() {
                             openEdit(task);
                           }
                         }}
-                        className={`border-l-4 ${typeMeta.borderClass} w-full cursor-pointer rounded-lg ${dueMeta.bgClass} p-4 shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
-                          draggingId === task.id ? 'opacity-50' : ''
-                        }`}
+                        className={`w-full cursor-pointer rounded-lg ${dueMeta.bgClass} p-3 shadow-sm border border-border-subtle border-l-4 ${typeMeta.borderClass} transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${draggingId === task.id ? 'opacity-50' : ''}`}
                       >
                         {dueMeta.icon && (
                           <div className="mb-2 flex justify-end">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-surface-raised/60 px-2 py-0.5 text-xs font-medium text-text-primary">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-surface-raised/60 px-1.5 py-0.5 text-xs font-medium text-text-primary">
                               <span aria-hidden="true">{dueMeta.icon}</span>
                               <span>{dueMeta.label}</span>
                             </span>
                           </div>
                         )}
                         <div className="flex items-start gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-600">
                             {initials}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-sm font-medium text-text-primary">
+                            <h3 className="line-clamp-2 text-sm font-semibold text-text-primary leading-tight">
                               {task.title}
                             </h3>
                             <div className="mt-2 flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="truncate text-xs text-text-muted">{task.assignee}</span>
-                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeMeta.pillClass}`}>
+                                <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ${typeMeta.pillClass}`}>
                                   <span aria-hidden="true">{typeMeta.icon}</span>
                                   <span>{typeMeta.label}</span>
                                 </span>
@@ -575,21 +573,23 @@ export default function App() {
                                   }}
                                   aria-label="Copy context"
                                   title="Copy context"
-                                  className="shrink-0 rounded-full border border-border-subtle bg-surface-raised px-2 py-0.5 text-xs text-text-muted hover:border-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                                  className="shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-full border border-border-subtle bg-surface-raised text-xs text-text-muted hover:border-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
                                 >
                                   📋
                                 </button>
 
                                 {TEAM.length <= 1 ? (
-                                  <select
-                                    disabled
+                                  <button
+                                    type="button"
                                     draggable={false}
+                                    disabled
                                     onClick={(e) => e.stopPropagation()}
-                                    className="shrink-0 rounded-full border border-border-subtle bg-surface-muted px-2 py-0.5 text-xs text-text-muted disabled:opacity-70 disabled:cursor-not-allowed"
-                                    title="Only one assignee in the solo build"
+                                    aria-label="Hand off (solo build)"
+                                    title="Hand off (solo build)"
+                                    className="shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-full border border-border-subtle bg-surface-muted text-xs text-text-muted opacity-70 cursor-not-allowed"
                                   >
-                                    <option>Hand off… (solo)</option>
-                                  </select>
+                                    ↔
+                                  </button>
                                 ) : (
                                   <select
                                     value=""
@@ -599,11 +599,13 @@ export default function App() {
                                       if (e.target.value) handleHandoff(task.id, e.target.value);
                                     }}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="shrink-0 rounded-full border border-border-subtle bg-surface-raised px-2 py-0.5 text-xs text-text-muted hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                                    aria-label="Hand off task"
+                                    title="Hand off task"
+                                    className="shrink-0 h-6 w-6 appearance-none rounded-full border border-border-subtle bg-surface-raised text-center text-xs leading-6 text-text-muted hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 cursor-pointer"
                                   >
-                                    <option value="" disabled>Hand off to…</option>
+                                    <option value="" disabled>↔</option>
                                     {TEAM.filter((name) => name !== task.assignee).map((name) => (
-                                      <option key={name} value={name}>{name}</option>
+                                      <option key={name} value={name}>→ {name}</option>
                                     ))}
                                   </select>
                                 )}
