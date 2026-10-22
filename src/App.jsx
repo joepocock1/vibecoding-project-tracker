@@ -212,26 +212,29 @@ const STAGE_BG = {
   'done':        'bg-emerald-900',
 };
 
+const STAGE_LEFT_BORDER = {
+  'todo':        'border-l-indigo-500',
+  'in-progress': 'border-l-violet-500',
+  'review':      'border-l-amber-500',
+  'done':        'border-l-emerald-500',
+};
+
 const TYPE_META = {
   feature: {
     label: 'Feature',
-    dotClass: 'bg-violet-500',
-    textClass: 'text-violet-700',
     borderClass: 'border-type-feature',
   },
   bug: {
     label: 'Bug',
-    dotClass: 'bg-red-500',
-    textClass: 'text-red-700',
     borderClass: 'border-type-bug',
   },
 };
 
 const DUE_META = {
-  calm:    { ringClass: '',                       label: null },
-  warning: { ringClass: 'ring-2 ring-amber-500',  label: 'Due today' },
-  alarm:   { ringClass: 'ring-2 ring-red-500',    label: 'Overdue' },
-  done:    { ringClass: '',                       label: null },
+  calm:    { bgClass: '',              label: null,        textClass: '' },
+  warning: { bgClass: 'bg-amber-200',  label: 'Due today', textClass: 'text-amber-800' },
+  alarm:   { bgClass: 'bg-red-200',    label: 'Overdue',   textClass: 'text-red-800' },
+  done:    { bgClass: '',              label: null,        textClass: '' },
 };
 
 function getDueState(task) {
@@ -467,7 +470,7 @@ export default function App() {
                           }
                         }}
                         aria-label={`${typeMeta.label} task. ${task.title}. Assigned to ${task.assignee}.${dueState === 'alarm' ? ' Overdue.' : dueState === 'warning' ? ' Due today.' : ''}`}
-                        className={`w-full cursor-pointer rounded-lg bg-white p-3 shadow-sm border border-zinc-200 border-l-4 ${typeMeta.borderClass} ${dueMeta.ringClass} ring-offset-zinc-950 transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                        className={`w-full cursor-pointer rounded-lg ${dueMeta.bgClass || 'bg-white'} p-3 shadow-sm border border-white border-l-4 ${STAGE_LEFT_BORDER[stage.id]} ring-offset-zinc-950 transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
                           draggingId === task.id ? 'opacity-50' : dueState === 'done' ? 'opacity-75' : ''
                         }`}
                       >
@@ -485,18 +488,15 @@ export default function App() {
                               {task.title}
                             </h3>
                             <div className="mt-2 flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className={`h-1.5 w-1.5 rounded-full ${typeMeta.dotClass} shrink-0`} aria-hidden="true" />
-                                <span className={`text-xs font-medium ${typeMeta.textClass} truncate`}>{typeMeta.label}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-white border border-zinc-200 px-1.5 py-0.5">
+                                  <TypeIcon type={task.type} className="h-3 w-3 text-zinc-700" />
+                                  <span className="text-xs font-medium text-zinc-700">{typeMeta.label}</span>
+                                </span>
                                 {dueMeta.label && (
-                                  <>
-                                    <span className="text-zinc-400 text-xs shrink-0" aria-hidden="true">·</span>
-                                    <span className={`text-xs font-semibold whitespace-nowrap ${
-                                      dueState === 'alarm' ? 'text-red-700' : 'text-amber-700'
-                                    }`}>
-                                      {dueMeta.label}
-                                    </span>
-                                  </>
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-white border border-zinc-200 px-1.5 py-0.5">
+                                    <span className={`text-xs font-semibold ${dueMeta.textClass}`}>{dueMeta.label}</span>
+                                  </span>
                                 )}
                               </div>
 
@@ -628,6 +628,33 @@ const NAV_ITEMS = [
   { id: 'settings',       label: 'Settings' },
 ];
 
+// Lucide sparkles (feature) and bug icons, sized by the caller.
+function TypeIcon({ type, className }) {
+  return type === 'feature' ? (
+    <svg {...ICON_PROPS} className={className}>
+      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+      <path d="M20 3v4"/>
+      <path d="M22 5h-4"/>
+      <path d="M4 17v2"/>
+      <path d="M5 18H3"/>
+    </svg>
+  ) : (
+    <svg {...ICON_PROPS} className={className}>
+      <path d="m8 2 1.88 1.88"/>
+      <path d="M14.12 3.88 16 2"/>
+      <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/>
+      <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/>
+      <path d="M12 20v-9"/>
+      <path d="M6.53 9C4.6 8.8 3 7.1 3 5"/>
+      <path d="M6 13H2"/>
+      <path d="M3 21c0-2.1 1.7-3.9 3.8-4"/>
+      <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/>
+      <path d="M22 13h-4"/>
+      <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>
+    </svg>
+  );
+}
+
 function SidebarNav({ collapsed }) {
   return (
     <aside
@@ -664,19 +691,19 @@ function SidebarNav({ collapsed }) {
       <div className="border-t border-zinc-800 px-3 py-3 space-y-1.5 text-xs text-zinc-400">
         <p className="font-semibold text-zinc-500 uppercase tracking-wide text-[10px] mb-2">Legend</p>
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+          <TypeIcon type="feature" className="h-3 w-3 text-zinc-300" />
           <span>Feature</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+          <TypeIcon type="bug" className="h-3 w-3 text-zinc-300" />
           <span>Bug</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full ring-2 ring-red-500 ring-offset-0" />
+          <span className="h-3 w-4 rounded-sm bg-red-200 border border-white" />
           <span>Overdue</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full ring-2 ring-amber-500 ring-offset-0" />
+          <span className="h-3 w-4 rounded-sm bg-amber-200 border border-white" />
           <span>Due today</span>
         </div>
         <div className="flex items-center gap-2 opacity-75">
@@ -784,9 +811,9 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
     onSave(formValues);
   };
 
-  const labelClass = 'block text-xs font-medium text-text-muted mb-1';
+  const labelClass = 'block text-xs font-medium text-zinc-400 mb-1';
   const fieldClass =
-    'block w-full rounded-md border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2';
+    'block w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900';
 
   return (
     <>
@@ -795,9 +822,9 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
         <form
           onSubmit={handleSubmit}
           onClick={(e) => e.stopPropagation()}
-          className="pointer-events-auto w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-surface-raised p-6 shadow-lg space-y-4"
+          className="pointer-events-auto w-full max-w-lg rounded-lg bg-zinc-900 border border-zinc-800 p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto [color-scheme:dark]"
         >
-          <h2 className="text-lg font-semibold text-text-primary">
+          <h2 className="text-lg font-semibold text-zinc-100">
             {mode === 'new' ? 'New task' : 'Edit task'}
           </h2>
 
@@ -836,9 +863,9 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
               <option value="feature">Feature</option>
               <option value="bug">Bug</option>
             </select>
-            <div className="mt-1 flex items-center gap-2">
-              <span className={`h-1.5 w-1.5 rounded-full ${TYPE_META[formValues.type].dotClass}`} />
-              <span className={`text-xs font-medium ${TYPE_META[formValues.type].textClass}`}>{TYPE_META[formValues.type].label}</span>
+            <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5">
+              <TypeIcon type={formValues.type} className="h-3 w-3 text-zinc-300" />
+              <span className="text-xs font-medium text-zinc-300">{TYPE_META[formValues.type].label}</span>
             </div>
           </div>
 
@@ -886,7 +913,7 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
           </div>
 
           <div>
-            <label htmlFor="task-context" className="block text-xs font-medium text-text-muted mb-1">
+            <label htmlFor="task-context" className="block text-xs font-medium text-zinc-400 mb-1">
               Context
             </label>
             <textarea
@@ -894,11 +921,11 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
               value={formValues.context}
               onChange={(e) => setFormValues({ ...formValues, context: e.target.value })}
               rows={8}
-              className="block w-full rounded-md border border-border-subtle bg-surface-raised px-3 py-2 font-mono text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+              className="block w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 font-mono text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
               placeholder="Markdown briefing for the next AI session"
             />
             {initialTask?.contextUpdatedAt && (
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-xs text-zinc-400">
                 Last updated {timeAgo(initialTask.contextUpdatedAt)}
               </p>
             )}
@@ -906,23 +933,26 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
               <button
                 type="button"
                 onClick={onCopy}
-                className="mt-2 inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-raised px-3 py-1 text-xs font-medium text-text-primary hover:border-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                className="mt-2 inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-100 hover:border-brand-500 hover:text-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
               >
-                <span aria-hidden="true">📋</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
                 <span>Copy Context</span>
               </button>
             )}
           </div>
 
           <div>
-            <label htmlFor="task-context-tool" className="block text-xs font-medium text-text-muted mb-1">
+            <label htmlFor="task-context-tool" className="block text-xs font-medium text-zinc-400 mb-1">
               AI tool
             </label>
             <select
               id="task-context-tool"
               value={formValues.contextTool ?? ''}
               onChange={(e) => setFormValues({ ...formValues, contextTool: e.target.value || null })}
-              className="block w-full rounded-md border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+              className="block w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
             >
               <option value="">— None —</option>
               {AI_TOOLS.map((t) => (
@@ -936,7 +966,7 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
               <button
                 type="button"
                 onClick={onDelete}
-                className="text-sm font-medium text-type-bug hover:underline"
+                className="text-sm font-medium text-red-400 hover:text-red-300 hover:underline"
               >
                 Delete
               </button>
@@ -947,7 +977,7 @@ function TaskModal({ mode, initialTask, onSave, onDelete, onCopy, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full px-4 py-2 text-sm font-medium text-text-muted hover:bg-surface-muted"
+                className="rounded-full px-4 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
               >
                 Cancel
               </button>
