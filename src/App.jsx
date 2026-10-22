@@ -227,15 +227,6 @@ const TYPE_META = {
   },
 };
 
-const ANCHOR_SLOTS = [
-  { id: 'presentation',  label: 'Presentation' },
-  { id: 'demo',          label: 'Demo' },
-  { id: 'report',        label: 'Report' },
-  { id: 'documentation', label: 'Documentation' },
-];
-
-const INITIAL_ANCHORS = ANCHOR_SLOTS.map((s) => ({ ...s, url: null }));
-
 const DUE_META = {
   calm:    { ringClass: '',                       label: null },
   warning: { ringClass: 'ring-2 ring-amber-500',  label: 'Due today' },
@@ -320,13 +311,7 @@ export default function App() {
   const [editing, setEditing] = useState(null);
   // null = modal closed, 'new' = new-task form, Task object = edit mode.
 
-  const [anchors, setAnchors] = useLocalStorage('vibetracker.anchors', INITIAL_ANCHORS);
-
-  const updateAnchor = (id, url) => {
-    setAnchors(anchors.map((a) =>
-      a.id === id ? { ...a, url: url || null } : a
-    ));
-  };
+  const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('vibetracker.sidebarCollapsed', false);
 
   const openNew  = () => setEditing('new');
   const openEdit = (task) => setEditing(task);
@@ -416,53 +401,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex bg-zinc-950 text-zinc-100">
-      <SidebarNav />
+      <SidebarNav collapsed={sidebarCollapsed} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar onNewTask={openNew} />
+        <Topbar
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed((v) => !v)}
+          onNewTask={openNew}
+        />
         <main className="flex-1 overflow-auto bg-zinc-950 p-6">
-      <section className="mb-6">
-        <h2 className="mb-2 text-sm font-semibold text-zinc-100">Deliverables</h2>
-        <div className="grid grid-cols-4 gap-4">
-          {anchors.map((anchor) => (
-            <section key={anchor.id} className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className={`inline-block h-2.5 w-2.5 rounded-full ${
-                    anchor.url ? 'bg-indigo-400' : 'border border-zinc-600'
-                  }`}
-                />
-                <h3 className="text-sm font-semibold text-zinc-100">{anchor.label}</h3>
-                {anchor.url && (
-                  <a
-                    href={anchor.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-auto text-xs font-medium text-indigo-400 hover:text-indigo-300"
-                  >
-                    Open ↗
-                  </a>
-                )}
-                <span className="sr-only">
-                  {anchor.url ? 'Link set' : 'No link set'}
-                </span>
-              </div>
-              <label htmlFor={`anchor-${anchor.id}`} className="sr-only">
-                {anchor.label} URL
-              </label>
-              <input
-                id={`anchor-${anchor.id}`}
-                type="url"
-                value={anchor.url ?? ''}
-                onChange={(e) => updateAnchor(anchor.id, e.target.value)}
-                placeholder="Paste link"
-                className="block w-full rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
-              />
-            </section>
-          ))}
-        </div>
-      </section>
-
       {/*
         TODO M4 data-model:
           Render a Kanban board with the four columns from STAGES.
@@ -473,7 +419,7 @@ export default function App() {
           Add a "+" button that opens a modal with every Task field.
           Clicking a card should open the same modal in edit mode.
       */}
-      <section className="grid grid-cols-4 gap-4">
+      <section className="flex gap-4 overflow-x-auto pb-2">
         {STAGES.map((stage) => {
           const stageTasks = tasks.filter((t) => t.status === stage.id);
           return (
@@ -482,7 +428,7 @@ export default function App() {
               onDragOver={handleDragOver}
               onDragEnter={() => handleDragEnter(stage.id)}
               onDrop={(e) => handleDrop(e, stage.id)}
-              className={`rounded-lg bg-zinc-900/40 border border-zinc-800 p-3 transition ${
+              className={`min-w-[280px] flex-1 rounded-lg bg-zinc-900/40 border border-zinc-800 p-3 transition ${
                 dragOverStage === stage.id ? 'ring-2 ring-brand-500 ring-offset-2 ring-offset-zinc-950' : ''
               }`}
             >
@@ -545,7 +491,7 @@ export default function App() {
                                 {dueMeta.label && (
                                   <>
                                     <span className="text-zinc-400 text-xs shrink-0" aria-hidden="true">·</span>
-                                    <span className={`text-xs font-semibold truncate ${
+                                    <span className={`text-xs font-semibold whitespace-nowrap ${
                                       dueState === 'alarm' ? 'text-red-700' : 'text-amber-700'
                                     }`}>
                                       {dueMeta.label}
@@ -682,13 +628,16 @@ const NAV_ITEMS = [
   { id: 'settings',       label: 'Settings' },
 ];
 
-function SidebarNav() {
+function SidebarNav({ collapsed }) {
   return (
-    <aside className="w-60 shrink-0 bg-zinc-950 border-r border-zinc-800 flex flex-col">
+    <aside
+      id="sidebar"
+      className={`${collapsed ? 'w-14' : 'w-60'} shrink-0 bg-zinc-950 border-r border-zinc-800 flex flex-col`}
+    >
       <div className="px-3 py-3 border-b border-zinc-800">
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${collapsed ? 'justify-center' : ''}`}>
           <div className="h-6 w-6 rounded bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">v</div>
-          <span className="text-sm font-semibold text-indigo-400">vibeline</span>
+          {!collapsed && <span className="text-sm font-semibold text-indigo-400">vibeline</span>}
         </div>
       </div>
 
@@ -698,18 +647,20 @@ function SidebarNav() {
             key={item.id}
             aria-current={item.active ? 'page' : undefined}
             aria-disabled={item.active ? undefined : 'true'}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md ${
+            title={item.label}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md ${collapsed ? 'justify-center' : ''} ${
               item.active
                 ? 'bg-zinc-800 text-zinc-50'
                 : 'text-zinc-400 hover:text-zinc-200 cursor-not-allowed opacity-70'
             }`}
           >
             {NAV_ICONS[item.id]}
-            <span>{item.label}</span>
+            <span className={collapsed ? 'sr-only' : undefined}>{item.label}</span>
           </a>
         ))}
       </nav>
 
+      {!collapsed && (
       <div className="border-t border-zinc-800 px-3 py-3 space-y-1.5 text-xs text-zinc-400">
         <p className="font-semibold text-zinc-500 uppercase tracking-wide text-[10px] mb-2">Legend</p>
         <div className="flex items-center gap-2">
@@ -733,26 +684,53 @@ function SidebarNav() {
           <span>Done</span>
         </div>
       </div>
+      )}
 
-      <div className="border-t border-zinc-800 p-3 flex items-center gap-2">
-        <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">JP</div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-zinc-100 truncate">Joe Pocock</p>
-          <p className="text-xs text-zinc-500 truncate">joe@vibeline.local</p>
+      <div className={`border-t border-zinc-800 p-3 flex items-center gap-2 ${collapsed ? 'justify-center' : ''}`}>
+        <div
+          role="img"
+          title="Joe Pocock"
+          aria-label="Joe Pocock"
+          className="h-8 w-8 shrink-0 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold"
+        >
+          JP
         </div>
+        {!collapsed && (
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-zinc-100 truncate">Joe Pocock</p>
+            <p className="text-xs text-zinc-500 truncate">joe@vibeline.local</p>
+          </div>
+        )}
       </div>
     </aside>
   );
 }
 
-function Topbar({ onNewTask }) {
+function Topbar({ collapsed, onToggle, onNewTask }) {
+  const toggleLabel = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
   return (
     <header className="h-14 shrink-0 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-6">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
-        <span className="text-zinc-500">vibeline</span>
-        <span className="text-zinc-700">/</span>
-        <span className="text-zinc-100 font-medium">Board</span>
-      </nav>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={toggleLabel}
+          title={toggleLabel}
+          aria-expanded={!collapsed}
+          aria-controls="sidebar"
+          className="h-8 w-8 inline-flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </button>
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
+          <span className="text-zinc-500">vibeline</span>
+          <span className="text-zinc-700">/</span>
+          <span className="text-zinc-100 font-medium">Board</span>
+        </nav>
+      </div>
       <button
         type="button"
         onClick={onNewTask}
