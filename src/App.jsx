@@ -267,6 +267,41 @@ const CONTEXT_TEMPLATE = `## Background
 ## Pick up where you left off
 `;
 
+// Reusable context templates, after the prompt pattern catalogue
+// (White et al., 2023).
+const PROMPT_TEMPLATES = [
+  {
+    id: 'bug-repro',
+    name: 'Bug reproduction',
+    description: 'Structured template for reproducing a defect with environment, steps, expected vs actual behaviour.',
+    body: '## Environment\n\n## Steps to reproduce\n1. \n2. \n3. \n\n## Expected\n\n## Actual\n\n## Hypothesis',
+  },
+  {
+    id: 'feature-spec',
+    name: 'Feature specification',
+    description: 'User story + acceptance criteria + edge cases + out-of-scope.',
+    body: '## User story\nAs a {user}, I want {goal}, so that {benefit}.\n\n## Acceptance criteria\n- [ ] \n- [ ] \n\n## Edge cases\n\n## Out of scope',
+  },
+  {
+    id: 'debug-session',
+    name: 'Debug session',
+    description: 'Context for continuing a debugging thread with another AI session.',
+    body: '## What I was debugging\n\n## What I tried\n- \n\n## What worked / didn\'t\n\n## Next hypothesis',
+  },
+  {
+    id: 'refactor-plan',
+    name: 'Refactor plan',
+    description: 'Target code, intended change, risk assessment, verification steps.',
+    body: '## Target\n\n## Goal\n\n## Risk\n\n## Verification',
+  },
+  {
+    id: 'code-review',
+    name: 'Code review request',
+    description: 'Context block for asking another AI to review a specific change.',
+    body: '## What changed\n\n## Why\n\n## Concerns\n\n## Reviewers please check',
+  },
+];
+
 function timeAgo(iso) {
   if (!iso) return null;
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -395,6 +430,14 @@ export default function App() {
     const ok = await copyToClipboard(serializeContext(task));
     setToast(ok
       ? 'Context copied — paste it into your AI.'
+      : 'Could not copy — try again.');
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  const handleCopyTemplate = async (template) => {
+    const ok = await copyToClipboard(template.body);
+    setToast(ok
+      ? 'Template copied — paste into a task context field.'
       : 'Could not copy — try again.');
     setTimeout(() => setToast(null), 2000);
   };
@@ -614,6 +657,9 @@ export default function App() {
         )}
         {view === 'dashboard' && <DashboardView tasks={tasks} />}
         {view === 'team' && <TeamView members={TEAM_MEMBERS} />}
+        {view === 'contextLibrary' && (
+          <ContextLibraryView templates={PROMPT_TEMPLATES} onCopy={handleCopyTemplate} />
+        )}
         {view === 'settings' && (
           <SettingsView
             prefs={prefs}
@@ -685,15 +731,16 @@ const NAV_ITEMS = [
   { id: 'board',          label: 'Board',           enabled: true },
   { id: 'dashboard',      label: 'Dashboard',       enabled: true },
   { id: 'team',           label: 'Team',            enabled: true },
-  { id: 'contextLibrary', label: 'Context Library', enabled: false },
+  { id: 'contextLibrary', label: 'Context Library', enabled: true },
   { id: 'settings',       label: 'Settings',        enabled: true },
 ];
 
 const VIEW_LABELS = {
   board:     'Board',
   dashboard: 'Dashboard',
-  team:      'Team',
-  settings: 'Settings',
+  team:           'Team',
+  contextLibrary: 'Context Library',
+  settings:       'Settings',
 };
 
 // Arbitrary variant: kills transitions on every element under <html>.
@@ -1128,6 +1175,46 @@ function DashboardView({ tasks }) {
           ))}
         </ul>
       </section>
+    </div>
+  );
+}
+
+function ContextLibraryView({ templates, onCopy }) {
+  return (
+    <div className="max-w-4xl space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold text-zinc-100">Context Library</h1>
+        <p className="mt-1 text-sm text-zinc-400">
+          Reusable prompt templates for your task context field. Based on the prompt pattern catalogue (White et al., 2023).
+        </p>
+      </div>
+
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {templates.map((t) => (
+          <li key={t.id} className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 flex flex-col gap-2">
+            <h2 className="text-sm font-semibold text-zinc-100">{t.name}</h2>
+            <p className="text-xs text-zinc-400">{t.description}</p>
+            {/* Padding sits on the wrapper so the clamp doesn't leak a 5th line into it. */}
+            <div className="rounded-md bg-zinc-950/60 border border-zinc-800 p-2">
+              <pre className="line-clamp-4 whitespace-pre-wrap text-xs font-mono text-zinc-400">{t.body}</pre>
+            </div>
+            <div className="pt-1 mt-auto">
+              <button
+                type="button"
+                onClick={() => onCopy(t)}
+                aria-label={`Copy template: ${t.name}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-100 hover:border-brand-500 hover:text-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
+              >
+                <svg {...ICON_PROPS} className="h-3.5 w-3.5">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Copy template
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
