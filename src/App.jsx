@@ -361,6 +361,10 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useLocalStorage('vibetracker.auth', false);
 
   const [currentView, setCurrentView] = useLocalStorage('vibetracker.view', 'board');
+
+  const [boardTab, setBoardTab] = useLocalStorage('vibetracker.boardTab', 'kanban');
+  const [typeFilter, setTypeFilter] = useLocalStorage('vibetracker.typeFilter', null);
+  // typeFilter is null (both), 'feature', or 'bug'
   // Unknown stored values fall back to the board so <main> is never empty.
   const view = VIEW_LABELS[currentView] ? currentView : 'board';
 
@@ -508,6 +512,12 @@ export default function App() {
           Add a "+" button that opens a modal with every Task field.
           Clicking a card should open the same modal in edit mode.
       */}
+      <BoardControls
+        boardTab={boardTab}
+        setBoardTab={setBoardTab}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+      />
       <section className="flex gap-4 overflow-x-auto pb-2">
         {STAGES.map((stage) => {
           const stageTasks = tasks.filter((t) => t.status === stage.id);
@@ -538,6 +548,9 @@ export default function App() {
                     .slice(0, 2)
                     .toUpperCase();
                   const typeMeta = TYPE_META[task.type];
+                  // Filtered-out cards stay visible but faded, and inert so
+                  // they leave the tab order and the accessibility tree.
+                  const matchesFilter = !typeFilter || task.type === typeFilter;
                   const dueState = getDueState(task);
                   const dueMeta  = DUE_META[dueState];
                   return (
@@ -545,7 +558,8 @@ export default function App() {
                       <div
                         role="button"
                         tabIndex={0}
-                        draggable
+                        draggable={matchesFilter}
+                        inert={matchesFilter ? undefined : ''}
                         onDragStart={(e) => handleDragStart(e, task.id)}
                         onDragEnd={handleDragEnd}
                         onClick={() => openEdit(task)}
@@ -557,7 +571,9 @@ export default function App() {
                         }}
                         aria-label={`${typeMeta.label} task. ${task.title}. Assigned to ${task.assignee}.${dueState === 'alarm' ? ' Overdue.' : dueState === 'warning' ? ' Due today.' : ''}`}
                         className={`w-full cursor-pointer rounded-lg ${dueMeta.bgClass || 'bg-white'} p-3 shadow-sm border border-white border-l-4 ${STAGE_LEFT_BORDER[stage.id]} ring-offset-zinc-950 transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
-                          draggingId === task.id ? 'opacity-50' : dueState === 'done' ? 'opacity-75' : ''
+                          !matchesFilter
+                            ? 'opacity-30 pointer-events-none'
+                            : draggingId === task.id ? 'opacity-50' : dueState === 'done' ? 'opacity-75' : ''
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -1175,6 +1191,71 @@ function DashboardView({ tasks }) {
           ))}
         </ul>
       </section>
+    </div>
+  );
+}
+
+const BOARD_TABS = [
+  { id: 'kanban',    label: 'Kanban',    enabled: true },
+  { id: 'backlog',   label: 'Backlog',   enabled: false },
+  { id: 'completed', label: 'Completed', enabled: false },
+  { id: 'closed',    label: 'Closed',    enabled: false },
+];
+
+const CONTROL_FOCUS = 'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900';
+
+function BoardControls({ boardTab, setBoardTab, typeFilter, setTypeFilter }) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div role="group" aria-label="Board view" className="inline-flex rounded-md border border-zinc-700 bg-zinc-800 p-0.5">
+        {BOARD_TABS.map((tab) =>
+          tab.enabled ? (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setBoardTab(tab.id)}
+              aria-pressed={boardTab === tab.id}
+              className={`px-3 py-1 text-xs font-medium rounded ${CONTROL_FOCUS} ${
+                boardTab === tab.id ? 'bg-brand-500 text-white' : 'text-zinc-300 hover:text-zinc-100'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ) : (
+            <button
+              key={tab.id}
+              type="button"
+              aria-disabled="true"
+              title="Not yet implemented"
+              className={`px-3 py-1 text-xs font-medium rounded text-zinc-400 cursor-not-allowed ${CONTROL_FOCUS}`}
+            >
+              {tab.label}
+            </button>
+          )
+        )}
+      </div>
+
+      <div role="group" aria-label="Filter by type" className="flex items-center gap-2">
+        {['feature', 'bug'].map((type) => {
+          const active = typeFilter === type;
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setTypeFilter(active ? null : type)}
+              aria-pressed={active}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${CONTROL_FOCUS} ${
+                active
+                  ? 'bg-brand-500 text-white border border-brand-500'
+                  : 'border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100'
+              }`}
+            >
+              <TypeIcon type={type} className="h-3 w-3" />
+              {TYPE_META[type].label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
