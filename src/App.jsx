@@ -46,6 +46,13 @@ export const STAGES = [
 // They become the only valid values for `Task.assignee`.
 export const TEAM = ['Joe Pocock', 'Alex Rivera', 'Sam Chen'];
 
+// Display data for the Team page. Names match TEAM.
+const TEAM_MEMBERS = [
+  { id: 'joe',   name: 'Joe Pocock',   email: 'joe@vibeline.local',   role: 'Lead' },
+  { id: 'alex',  name: 'Alex Rivera',  email: 'alex@vibeline.local',  role: 'Developer' },
+  { id: 'sam',   name: 'Sam Chen',     email: 'sam@vibeline.local',   role: 'Designer' },
+];
+
 /**
  * A tiny localStorage hook — survives reloads, no library needed.
  *
@@ -605,6 +612,7 @@ export default function App() {
       </section>
         </>
         )}
+        {view === 'team' && <TeamView members={TEAM_MEMBERS} />}
         {view === 'settings' && (
           <SettingsView
             prefs={prefs}
@@ -660,6 +668,9 @@ const NAV_ICONS = {
   dashboard: (
     <svg {...ICON_PROPS}><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
   ),
+  team: (
+    <svg {...ICON_PROPS}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  ),
   contextLibrary: (
     <svg {...ICON_PROPS}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
   ),
@@ -668,16 +679,18 @@ const NAV_ICONS = {
   ),
 };
 
-// Board and Settings are live views; the rest are placeholders.
+// Enabled items are live views; the rest are placeholders.
 const NAV_ITEMS = [
   { id: 'board',          label: 'Board',           enabled: true },
   { id: 'dashboard',      label: 'Dashboard',       enabled: false },
+  { id: 'team',           label: 'Team',            enabled: true },
   { id: 'contextLibrary', label: 'Context Library', enabled: false },
   { id: 'settings',       label: 'Settings',        enabled: true },
 ];
 
 const VIEW_LABELS = {
   board:    'Board',
+  team:     'Team',
   settings: 'Settings',
 };
 
@@ -950,6 +963,63 @@ function SettingsView({ prefs, setPrefs, onSignOut }) {
           </button>
         </SettingsRow>
       </SectionCard>
+    </div>
+  );
+}
+
+function initialsOf(name) {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function TeamView({ members }) {
+  return (
+    <div className="max-w-4xl space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-zinc-100">Team</h1>
+          <p className="mt-1 text-sm text-zinc-400">Members of your vibeline project.</p>
+        </div>
+        <button
+          type="button"
+          aria-disabled="true"
+          title="Not yet implemented"
+          className="shrink-0 rounded-full border border-zinc-700 px-4 py-1.5 text-xs font-medium text-zinc-300 cursor-not-allowed hover:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
+        >
+          + Invite member
+        </button>
+      </div>
+
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {members.map((m) => (
+          <li key={m.id} className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 flex items-start gap-3">
+            <div
+              aria-hidden="true"
+              className="h-10 w-10 shrink-0 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-semibold text-white"
+            >
+              {initialsOf(m.name)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-zinc-100">{m.name}</p>
+              <p className="text-xs text-zinc-400">{m.role}</p>
+              <p className="text-xs text-zinc-400 mt-1 truncate">{m.email}</p>
+            </div>
+            <button
+              type="button"
+              aria-disabled="true"
+              aria-label={`Remove ${m.name}`}
+              title="Not yet implemented"
+              className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-zinc-400 cursor-not-allowed hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
