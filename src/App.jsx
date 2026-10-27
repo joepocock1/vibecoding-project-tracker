@@ -612,6 +612,7 @@ export default function App() {
       </section>
         </>
         )}
+        {view === 'dashboard' && <DashboardView tasks={tasks} />}
         {view === 'team' && <TeamView members={TEAM_MEMBERS} />}
         {view === 'settings' && (
           <SettingsView
@@ -682,15 +683,16 @@ const NAV_ICONS = {
 // Enabled items are live views; the rest are placeholders.
 const NAV_ITEMS = [
   { id: 'board',          label: 'Board',           enabled: true },
-  { id: 'dashboard',      label: 'Dashboard',       enabled: false },
+  { id: 'dashboard',      label: 'Dashboard',       enabled: true },
   { id: 'team',           label: 'Team',            enabled: true },
   { id: 'contextLibrary', label: 'Context Library', enabled: false },
   { id: 'settings',       label: 'Settings',        enabled: true },
 ];
 
 const VIEW_LABELS = {
-  board:    'Board',
-  team:     'Team',
+  board:     'Board',
+  dashboard: 'Dashboard',
+  team:      'Team',
   settings: 'Settings',
 };
 
@@ -974,6 +976,160 @@ function initialsOf(name) {
     .join('')
     .slice(0, 2)
     .toUpperCase();
+}
+
+function countBy(items, keyFn) {
+  const counts = {};
+  items.forEach((item) => {
+    const key = keyFn(item);
+    if (key) counts[key] = (counts[key] ?? 0) + 1;
+  });
+  return counts;
+}
+
+// Returns [key, count] for the largest bucket, or null when empty.
+function topEntry(counts) {
+  const entries = Object.entries(counts);
+  if (entries.length === 0) return null;
+  return entries.reduce((best, e) => (e[1] > best[1] ? e : best));
+}
+
+function taskOrder(t) {
+  return Number(String(t.id).replace(/\D/g, '')) || 0;
+}
+
+function StatTile({ label, value, description, alert }) {
+  return (
+    <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
+      <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">{label}</p>
+      <p className={`mt-2 text-3xl font-bold ${alert ? 'text-red-400' : 'text-zinc-100'}`}>{value}</p>
+      <p className="mt-1 text-xs text-zinc-400">{description}</p>
+    </div>
+  );
+}
+
+function InsightTile({ label, primary, secondary }) {
+  return (
+    <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
+      <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">{label}</p>
+      <p className="mt-2 text-lg font-semibold text-zinc-100">{primary}</p>
+      <p className="text-xs text-zinc-400">{secondary}</p>
+    </div>
+  );
+}
+
+function DashboardView({ tasks }) {
+  const overdueTasks = tasks
+    .filter((t) => getDueState(t) === 'alarm')
+    .sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1));
+  const doneCount = tasks.filter((t) => t.status === 'done').length;
+
+  const topAssignee = topEntry(countBy(tasks, (t) => t.assignee));
+  const topTool = topEntry(countBy(tasks, (t) => t.contextTool));
+
+  const closedBugs = tasks.filter((t) => t.type === 'bug' && t.status === 'done');
+  const topCloser = topEntry(countBy(closedBugs, (t) => t.assignee));
+
+  const activeTasks = tasks.filter((t) => t.status !== 'done');
+  const withContext = activeTasks.filter(
+    (t) => t.context && t.context.trim() && t.context.trim() !== CONTEXT_TEMPLATE.trim()
+  );
+  const contextPct = activeTasks.length
+    ? Math.round((withContext.length / activeTasks.length) * 100)
+    : 0;
+  const reviewCount = tasks.filter((t) => t.status === 'review').length;
+
+  const recent = [...tasks]
+    .sort((a, b) =>
+      (b.createdDate ?? '').localeCompare(a.createdDate ?? '') || taskOrder(b) - taskOrder(a)
+    )
+    .slice(0, 5);
+  const stageLabel = Object.fromEntries(STAGES.map((s) => [s.id, s.label]));
+
+  return (
+    <div className="max-w-4xl space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-zinc-100">Welcome, Joe</h1>
+        <p className="mt-1 text-sm text-zinc-400">Here's an overview of your project activity.</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <StatTile label="Total tasks" value={tasks.length} description="Across all four columns" />
+        <StatTile
+          label="Overdue"
+          value={overdueTasks.length}
+          description="Past their due date"
+          alert={overdueTasks.length > 0}
+        />
+        <StatTile label="Done this week" value={doneCount} description="Tasks currently in Done" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <InsightTile
+          label="Top assignee"
+          primary={topAssignee ? topAssignee[0] : '—'}
+          secondary={topAssignee ? `${topAssignee[1]} task${topAssignee[1] === 1 ? '' : 's'}` : 'No tasks yet'}
+        />
+        <InsightTile
+          label="Most-used AI tool"
+          primary={topTool ? topTool[0] : 'Claude'}
+          secondary={topTool ? `${topTool[1]} context${topTool[1] === 1 ? '' : 's'}` : '0 contexts'}
+        />
+      </div>
+
+      <section className="rounded-lg bg-zinc-900 border border-zinc-800 border-l-2 border-l-violet-500/50 p-4 space-y-3">
+        <div>
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+            <TypeIcon type="feature" className="h-4 w-4 text-violet-400" />
+            vibeline Insights
+          </h2>
+          <p className="text-xs text-zinc-400">Auto-generated · updated now</p>
+        </div>
+        <div className="space-y-3 text-sm text-zinc-300">
+          <div>
+            <p className="font-medium">This week:</p>
+            <ul className="mt-1 list-disc pl-5 space-y-0.5">
+              <li>
+                {closedBugs.length} bug{closedBugs.length === 1 ? '' : 's'} closed
+                {topCloser ? ` by ${topCloser[0]}` : ''}
+              </li>
+              <li>{overdueTasks.length} overdue {overdueTasks.length === 1 ? 'item needs' : 'items need'} attention</li>
+              <li>Context field completeness: {contextPct}% of active tasks</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium">Suggested focus:</p>
+            <ul className="mt-1 list-disc pl-5 space-y-0.5">
+              <li>{overdueTasks[0] ? overdueTasks[0].title : 'No overdue tasks'}</li>
+              <li>Review tasks in Review column ({reviewCount})</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Recent activity</h2>
+        <ul className="rounded-lg bg-zinc-900 border border-zinc-800 divide-y divide-zinc-800">
+          {recent.map((t) => (
+            <li key={t.id} className="flex items-center gap-3 px-4 py-2.5">
+              <div
+                role="img"
+                aria-label={t.assignee}
+                title={t.assignee}
+                className="h-7 w-7 shrink-0 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-semibold text-white"
+              >
+                {initialsOf(t.assignee)}
+              </div>
+              <p className="min-w-0 flex-1 truncate text-sm text-zinc-100">{t.title}</p>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium text-white ${STAGE_BG[t.status]}`}>
+                {stageLabel[t.status]}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
 }
 
 function TeamView({ members }) {
