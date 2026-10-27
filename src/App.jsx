@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * Vibecoding Project Tracker — starter scaffold.
@@ -1180,17 +1180,143 @@ function TeamView({ members }) {
   );
 }
 
+// Org / project switchers are an architectural mockup: only the active
+// entry is real, the rest are placeholders.
+const ACTIVE_ORG = 'Vibeline Labs';
+const ACTIVE_PROJECT = 'vibeline';
+const ORGS = [ACTIVE_ORG, 'Acme Studio'];
+const PROJECTS = [ACTIVE_PROJECT, 'Marketing Site', 'Mobile App'];
+
+function ChevronDown({ open }) {
+  return (
+    <svg
+      {...ICON_PROPS}
+      className={`h-3 w-3 shrink-0 motion-safe:transition-transform ${open ? 'rotate-180' : ''}`}
+    >
+      <path d="m6 9 6 6 6-6"/>
+    </svg>
+  );
+}
+
+const SWITCHER_FOCUS = 'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900';
+
+function SwitcherDisclosure({ kind, current, items, createLabel, collapsed, logo = false }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+  const panelId = `switcher-${kind.toLowerCase()}`;
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e) => {
+      if (!containerRef.current?.contains(e.target)) setOpen(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        title={`${kind}: ${current}`}
+        className={`flex w-full items-center gap-1 rounded-md py-1 text-left hover:bg-zinc-800 ${SWITCHER_FOCUS} ${
+          collapsed ? 'justify-center px-0' : logo ? 'px-1' : 'pl-8 pr-1'
+        }`}
+      >
+        {logo && (
+          <span
+            aria-hidden="true"
+            className="h-6 w-6 shrink-0 rounded bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold"
+          >
+            v
+          </span>
+        )}
+        <span className={collapsed ? 'sr-only' : `min-w-0 flex-1 truncate ${logo ? 'ml-1 text-sm font-semibold text-indigo-400' : 'text-sm text-zinc-300'}`}>
+          <span className="sr-only">{kind}: </span>
+          {current}
+        </span>
+        <span className="text-zinc-400">
+          <ChevronDown open={open} />
+        </span>
+      </button>
+
+      {open && (
+        <ul
+          id={panelId}
+          aria-label={`${kind}s`}
+          className="absolute left-0 top-full z-40 mt-1 w-52 rounded-md bg-zinc-800 border border-zinc-700 shadow-lg py-1"
+        >
+          {items.map((name) => (
+            <li key={name}>
+              {name === current ? (
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-current="true"
+                  className={`block w-full px-3 py-1.5 text-left text-sm text-zinc-100 bg-zinc-700/60 hover:bg-zinc-700 ${SWITCHER_FOCUS}`}
+                >
+                  {name}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  aria-disabled="true"
+                  title="Not yet implemented"
+                  className={`block w-full px-3 py-1.5 text-left text-sm text-zinc-400 cursor-not-allowed ${SWITCHER_FOCUS}`}
+                >
+                  {name}
+                </button>
+              )}
+            </li>
+          ))}
+          <li className="mt-1 border-t border-zinc-700 pt-1">
+            <button
+              type="button"
+              aria-disabled="true"
+              title="Not yet implemented"
+              className={`block w-full px-3 py-1.5 text-left text-sm text-zinc-400 cursor-not-allowed ${SWITCHER_FOCUS}`}
+            >
+              {createLabel}
+            </button>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function SidebarNav({ collapsed, currentView, setCurrentView }) {
   return (
     <aside
       id="sidebar"
       className={`${collapsed ? 'w-14' : 'w-60'} shrink-0 bg-zinc-950 border-r border-zinc-800 flex flex-col`}
     >
-      <div className="px-3 py-3 border-b border-zinc-800">
-        <div className={`flex items-center gap-2 ${collapsed ? 'justify-center' : ''}`}>
-          <div className="h-6 w-6 rounded bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">v</div>
-          {!collapsed && <span className="text-sm font-semibold text-indigo-400">vibeline</span>}
-        </div>
+      <div className={`${collapsed ? 'px-2' : 'px-3'} py-3 border-b border-zinc-800 space-y-1`}>
+        <SwitcherDisclosure
+          kind="Organisation"
+          current={ACTIVE_ORG}
+          items={ORGS}
+          createLabel="+ Create organisation"
+          collapsed={collapsed}
+          logo
+        />
+        <SwitcherDisclosure
+          kind="Project"
+          current={ACTIVE_PROJECT}
+          items={PROJECTS}
+          createLabel="+ New project"
+          collapsed={collapsed}
+        />
       </div>
 
       <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3 space-y-1 text-sm">
@@ -1300,8 +1426,10 @@ function Topbar({ collapsed, onToggle, viewLabel, onNewTask }) {
           </svg>
         </button>
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
-          <span className="text-zinc-500">vibeline</span>
-          <span className="text-zinc-700">/</span>
+          <span className="text-zinc-400">{ACTIVE_ORG}</span>
+          <span className="text-zinc-700" aria-hidden="true">/</span>
+          <span className="text-zinc-400">{ACTIVE_PROJECT}</span>
+          <span className="text-zinc-700" aria-hidden="true">/</span>
           <span className="text-zinc-100 font-medium">{viewLabel}</span>
         </nav>
       </div>
