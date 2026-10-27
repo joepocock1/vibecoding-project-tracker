@@ -318,6 +318,28 @@ export default function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useLocalStorage('vibetracker.auth', false);
 
+  const [currentView, setCurrentView] = useLocalStorage('vibetracker.view', 'board');
+  // Unknown stored values fall back to the board so <main> is never empty.
+  const view = VIEW_LABELS[currentView] ? currentView : 'board';
+
+  const [prefs, setPrefs] = useLocalStorage('vibetracker.prefs', {
+    theme: 'dark',
+    textSize: 'medium',
+    reduceMotion: false,
+    highContrast: false,
+    accentColor: 'indigo',
+  });
+
+  // Percentages scale from the user's own browser font size (WCAG 1.4.4).
+  useEffect(() => {
+    const sizeMap = { small: '87.5%', medium: '100%', large: '112.5%' };
+    document.documentElement.style.fontSize = sizeMap[prefs.textSize] || '100%';
+  }, [prefs.textSize]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(REDUCE_MOTION_CLASS, prefs.reduceMotion);
+  }, [prefs.reduceMotion]);
+
   const openNew  = () => setEditing('new');
   const openEdit = (task) => setEditing(task);
   const closeModal = () => setEditing(null);
@@ -411,14 +433,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex bg-zinc-950 text-zinc-100">
-      <SidebarNav collapsed={sidebarCollapsed} />
+      <SidebarNav
+        collapsed={sidebarCollapsed}
+        currentView={view}
+        setCurrentView={setCurrentView}
+      />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed((v) => !v)}
-          onNewTask={openNew}
+          viewLabel={VIEW_LABELS[view]}
+          onNewTask={view === 'board' ? openNew : null}
         />
         <main className="flex-1 overflow-auto bg-zinc-950 p-6">
+        {view === 'board' && (
+        <>
       {/*
         TODO M4 data-model:
           Render a Kanban board with the four columns from STAGES.
@@ -574,6 +603,18 @@ export default function App() {
           );
         })}
       </section>
+        </>
+        )}
+        {view === 'settings' && (
+          <SettingsView
+            prefs={prefs}
+            setPrefs={setPrefs}
+            onSignOut={() => {
+              setIsAuthenticated(false);
+              setCurrentView('board');
+            }}
+          />
+        )}
         </main>
       </div>
 
@@ -627,13 +668,21 @@ const NAV_ICONS = {
   ),
 };
 
-// Only Board is live; the rest are placeholders for future views.
+// Board and Settings are live views; the rest are placeholders.
 const NAV_ITEMS = [
-  { id: 'board',          label: 'Board',           active: true },
-  { id: 'dashboard',      label: 'Dashboard' },
-  { id: 'contextLibrary', label: 'Context Library' },
-  { id: 'settings',       label: 'Settings' },
+  { id: 'board',          label: 'Board',           enabled: true },
+  { id: 'dashboard',      label: 'Dashboard',       enabled: false },
+  { id: 'contextLibrary', label: 'Context Library', enabled: false },
+  { id: 'settings',       label: 'Settings',        enabled: true },
 ];
+
+const VIEW_LABELS = {
+  board:    'Board',
+  settings: 'Settings',
+};
+
+// Arbitrary variant: kills transitions on every element under <html>.
+const REDUCE_MOTION_CLASS = '[&_*]:!transition-none';
 
 // Lucide sparkles (feature) and bug icons, sized by the caller.
 function TypeIcon({ type, className }) {
@@ -755,7 +804,157 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-function SidebarNav({ collapsed }) {
+// Settings building blocks live at module level so React keeps the same
+// component identity across renders and keyboard focus isn't lost.
+function SectionCard({ title, children }) {
+  return (
+    <section className="rounded-lg bg-zinc-900 border border-zinc-800 p-5 space-y-4">
+      <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function SettingsRow({ label, hint, children }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2 border-t border-zinc-800 first:border-t-0 first:pt-0">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-zinc-100">{label}</p>
+        {hint && <p className="mt-0.5 text-xs text-zinc-400">{hint}</p>}
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}
+
+function SegmentedButton({ label, options, value, onChange }) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex rounded-md border border-zinc-700 bg-zinc-800 p-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
+          className={`px-3 py-1 text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-800 ${
+            value === opt.value
+              ? 'bg-brand-500 text-white'
+              : 'text-zinc-300 hover:text-zinc-100'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Toggle({ checked, onChange, label }) {
+  return (
+    <label className="inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        aria-label={label}
+        className="h-4 w-4 accent-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
+      />
+    </label>
+  );
+}
+
+const ACCENTS = [
+  { value: 'indigo',  hex: '#6366f1' },
+  { value: 'violet',  hex: '#8b5cf6' },
+  { value: 'emerald', hex: '#10b981' },
+  { value: 'amber',   hex: '#f59e0b' },
+  { value: 'rose',    hex: '#f43f5e' },
+];
+
+// Text size and reduce motion apply live; theme, accent and high contrast
+// only persist for now (future work).
+function SettingsView({ prefs, setPrefs, onSignOut }) {
+  const update = (key, value) => setPrefs({ ...prefs, [key]: value });
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold text-zinc-100">Settings</h1>
+        <p className="mt-1 text-sm text-zinc-400">Customise your vibeline experience. Accessibility preferences follow WCAG 2.1 criteria.</p>
+      </div>
+
+      <SectionCard title="Appearance">
+        <SettingsRow label="Theme" hint="Not yet active — light theme coming in a future release. WCAG 2.1 SC 1.4.11 (AA) — Non-text contrast.">
+          <SegmentedButton
+            label="Theme"
+            options={[
+              { value: 'dark', label: 'Dark' },
+              { value: 'light', label: 'Light' },
+            ]}
+            value={prefs.theme}
+            onChange={(v) => update('theme', v)}
+          />
+        </SettingsRow>
+        <SettingsRow label="Accent colour" hint="Not yet active. Choose your brand highlight. Default: indigo.">
+          <div role="group" aria-label="Accent colour" className="flex items-center gap-2">
+            {ACCENTS.map((a) => (
+              <button
+                key={a.value}
+                type="button"
+                onClick={() => update('accentColor', a.value)}
+                aria-label={`Accent ${a.value}`}
+                aria-pressed={prefs.accentColor === a.value}
+                title={a.value}
+                className={`h-6 w-6 rounded-full border-2 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+                  prefs.accentColor === a.value ? 'border-zinc-100' : 'border-transparent'
+                }`}
+                style={{ backgroundColor: a.hex }}
+              />
+            ))}
+          </div>
+        </SettingsRow>
+      </SectionCard>
+
+      <SectionCard title="Reading">
+        <SettingsRow label="Text size" hint="WCAG 2.1 SC 1.4.4 (AA) — Resize text up to 200% without loss of content or function.">
+          <SegmentedButton
+            label="Text size"
+            options={[
+              { value: 'small', label: 'Small' },
+              { value: 'medium', label: 'Medium' },
+              { value: 'large', label: 'Large' },
+            ]}
+            value={prefs.textSize}
+            onChange={(v) => update('textSize', v)}
+          />
+        </SettingsRow>
+        <SettingsRow label="High contrast mode" hint="Not yet active. WCAG 2.1 SC 1.4.6 (AAA) — Contrast (Enhanced). Minimum 7:1 for body text.">
+          <Toggle label="High contrast mode" checked={prefs.highContrast} onChange={(v) => update('highContrast', v)} />
+        </SettingsRow>
+      </SectionCard>
+
+      <SectionCard title="Motion">
+        <SettingsRow label="Reduce motion" hint="WCAG 2.1 SC 2.3.3 (AAA) — Animation from interactions. Turns off transitions.">
+          <Toggle label="Reduce motion" checked={prefs.reduceMotion} onChange={(v) => update('reduceMotion', v)} />
+        </SettingsRow>
+      </SectionCard>
+
+      <SectionCard title="Account">
+        <SettingsRow label="Signed in" hint="joe@vibeline.local">
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="rounded-full border border-red-500/50 bg-red-500/10 px-4 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
+          >
+            Sign out
+          </button>
+        </SettingsRow>
+      </SectionCard>
+    </div>
+  );
+}
+
+function SidebarNav({ collapsed, currentView, setCurrentView }) {
   return (
     <aside
       id="sidebar"
@@ -769,22 +968,44 @@ function SidebarNav({ collapsed }) {
       </div>
 
       <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3 space-y-1 text-sm">
-        {NAV_ITEMS.map((item) => (
-          <a
-            key={item.id}
-            aria-current={item.active ? 'page' : undefined}
-            aria-disabled={item.active ? undefined : 'true'}
-            title={item.label}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md ${collapsed ? 'justify-center' : ''} ${
-              item.active
-                ? 'bg-zinc-800 text-zinc-50'
-                : 'text-zinc-400 hover:text-zinc-200 cursor-not-allowed opacity-70'
-            }`}
-          >
-            {NAV_ICONS[item.id]}
-            <span className={collapsed ? 'sr-only' : undefined}>{item.label}</span>
-          </a>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const content = (
+            <>
+              {NAV_ICONS[item.id]}
+              <span className={collapsed ? 'sr-only' : undefined}>{item.label}</span>
+            </>
+          );
+          const base = `flex w-full items-center gap-2 px-3 py-1.5 rounded-md ${collapsed ? 'justify-center' : ''}`;
+          if (!item.enabled) {
+            return (
+              <a
+                key={item.id}
+                aria-disabled="true"
+                title={item.label}
+                className={`${base} text-zinc-400 hover:text-zinc-200 cursor-not-allowed opacity-70`}
+              >
+                {content}
+              </a>
+            );
+          }
+          const selected = currentView === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setCurrentView(item.id)}
+              aria-current={selected ? 'page' : undefined}
+              title={item.label}
+              className={`${base} focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+                selected
+                  ? 'bg-zinc-800 text-zinc-50'
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'
+              }`}
+            >
+              {content}
+            </button>
+          );
+        })}
       </nav>
 
       {!collapsed && (
@@ -833,7 +1054,7 @@ function SidebarNav({ collapsed }) {
   );
 }
 
-function Topbar({ collapsed, onToggle, onNewTask }) {
+function Topbar({ collapsed, onToggle, viewLabel, onNewTask }) {
   const toggleLabel = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
   return (
     <header className="h-14 shrink-0 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-6">
@@ -855,16 +1076,18 @@ function Topbar({ collapsed, onToggle, onNewTask }) {
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
           <span className="text-zinc-500">vibeline</span>
           <span className="text-zinc-700">/</span>
-          <span className="text-zinc-100 font-medium">Board</span>
+          <span className="text-zinc-100 font-medium">{viewLabel}</span>
         </nav>
       </div>
-      <button
-        type="button"
-        onClick={onNewTask}
-        className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
-      >
-        + New task
-      </button>
+      {onNewTask && (
+        <button
+          type="button"
+          onClick={onNewTask}
+          className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+        >
+          + New task
+        </button>
+      )}
     </header>
   );
 }
