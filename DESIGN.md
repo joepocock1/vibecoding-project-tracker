@@ -1,3 +1,13 @@
+> **Design update (28 Oct 2026).** The pastel light scaffold
+> described below has been replaced with a dark Clachan-inspired
+> system. Chrome is zinc-950, cards are white, column headers are
+> saturated indigo-800 / violet-900 / amber-900 / emerald-900. Type
+> is a pill chip combining a Lucide icon and a text label. Due
+> states tint the card body — red-200 for overdue, amber-200 for
+> due today, white calm, opacity-75 done — and each card carries a
+> 4-px left border in its column colour. The original pastel
+> description below is kept as history of the first iteration.
+
 # Vibecoding Project Tracker — Design
 
 **Status:** Hackathon starter design doc · fill in the **`<TODO>`** sections before you tag `design-done`.

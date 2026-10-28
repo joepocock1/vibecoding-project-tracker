@@ -149,10 +149,15 @@ Fill in:
 
 ## 12. Out of scope (do not build)
 
-- Authentication / accounts.
+> **Scope updates (28 Oct, after module Q&A clarification):** fake
+> authentication was moved IN scope — the module leader confirmed a
+> login screen is required if the app models more than one user.
+> Mobile responsive was partially moved in — the four-column kanban
+> now scrolls horizontally on narrow viewports, though the surfaces
+> are still designed desktop-first.
+
 - Real GitHub integration.
 - A real backend / shared database.
-- Mobile responsive — desktop only is fine.
 - Multi-team support.
 - Real-time collaboration.
 

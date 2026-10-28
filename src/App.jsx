@@ -1124,7 +1124,7 @@ function DashboardView({ tasks }) {
           description="Past their due date"
           alert={overdueTasks.length > 0}
         />
-        <StatTile label="Done this week" value={doneCount} description="Tasks currently in Done" />
+        <StatTile label="In Done" value={doneCount} description="Tasks currently in Done" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
